@@ -12,3 +12,8 @@
 /Backend/INconnect.Domain/obj
 /Backend/INconnect.Infrastructure/bin/Debug/net8.0
 /Backend/INconnect.Infrastructure/obj
+/Frontend/node_modules
+/Backend/INconnect.API/bin/Release/net8.0
+/Backend/INconnect.Application/bin/Release/net8.0
+/Backend/INconnect.Domain/bin/Release/net8.0
+/Backend/INconnect.Infrastructure/bin/Release/net8.0
