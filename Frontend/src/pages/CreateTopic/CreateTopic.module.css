@@ -1,0 +1,138 @@
+.container {
+  padding-bottom: 40px;
+}
+
+.heading {
+  font-size: 1.5rem;
+  margin-bottom: 24px;
+}
+
+.form {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.formGroup label {
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  transition: all var(--transition-fast);
+  outline: none;
+}
+
+.formGroup input:focus,
+.formGroup select:focus,
+.formGroup textarea:focus {
+  border-color: var(--accent-primary);
+  box-shadow: var(--shadow-glow);
+}
+
+.formGroup select {
+  cursor: pointer;
+  appearance: none;
+}
+
+.formGroup textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border-light);
+}
+
+.cancelBtn {
+  padding: 10px 24px;
+  color: var(--text-secondary);
+  border-radius: var(--radius-full);
+  font-weight: 500;
+  transition: background var(--transition-fast);
+}
+
+.cancelBtn:hover {
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+.submitBtn {
+  background: var(--accent-gradient);
+  color: white;
+  padding: 10px 32px;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  border: none;
+}
+
+.submitBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+}
+
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.animateSpin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* CKEditor Dark Theme Overrides */
+.editorWrapper :global(.ck.ck-editor__main > .ck-editor__editable) {
+  background: var(--bg-surface) !important;
+  border-color: var(--border-light) !important;
+  color: var(--text-primary) !important;
+  min-height: 200px;
+}
+.editorWrapper :global(.ck.ck-toolbar) {
+  background: var(--bg-surface-hover) !important;
+  border-color: var(--border-light) !important;
+}
+.editorWrapper :global(.ck.ck-button) {
+  color: var(--text-secondary) !important;
+}
+.editorWrapper :global(.ck.ck-button:hover) {
+  background: var(--bg-surface) !important;
+  color: var(--text-primary) !important;
+}
+.editorWrapper :global(.ck.ck-button.ck-on) {
+  background: rgba(99, 102, 241, 0.2) !important;
+  color: var(--accent-primary) !important;
+}
+.editorWrapper :global(.ck.ck-dropdown__panel) {
+  background: var(--bg-surface-hover) !important;
+  border-color: var(--border-light) !important;
+}

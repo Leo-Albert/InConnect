@@ -1,4 +1,6 @@
+using INconnect.Application.Interfaces;
 using INconnect.Infrastructure.Data;
+using INconnect.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -6,18 +8,29 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Ensure the frontend can connect without CORS issues
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend",
+        b => b.SetIsOriginAllowed(origin => true) // Allow any dynamic port Vite picks
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials());
+});
+
 // Add services to the container.
 builder.Services.AddControllers()
-    .AddJsonOptions(options => {
+    .AddJsonOptions(options =>
+    {
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
 
+builder.Services.AddScoped<ITopicService, TopicService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo { Title = "INconnect API", Version = "v1" });
-    
-    // Add JWT Authentication option to Swagger UI
+
     c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
     {
         Description = "JWT Authorization header using the Bearer scheme.\r\nEnter your token in the text input below.\r\nExample: '12345abcdef'",
@@ -27,7 +40,7 @@ builder.Services.AddSwaggerGen(c =>
         Scheme = "Bearer",
         BearerFormat = "JWT"
     });
-    
+
     c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
     {
         {
@@ -67,12 +80,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+
+app.UseSwagger();
+app.UseSwaggerUI();
+
+app.UseCors("AllowFrontend");
 
 app.UseHttpsRedirection();
 
