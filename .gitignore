@@ -1,0 +1,14 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/Backend/.vs/INconnect
+/Backend/INconnect.API/bin/Debug/net8.0
+/Backend/INconnect.API/obj
+/Backend/INconnect.Application/bin/Debug/net8.0
+/Backend/INconnect.Application/obj
+/Backend/INconnect.Domain/bin/Debug/net8.0
+/Backend/INconnect.Domain/obj
+/Backend/INconnect.Infrastructure/bin/Debug/net8.0
+/Backend/INconnect.Infrastructure/obj
