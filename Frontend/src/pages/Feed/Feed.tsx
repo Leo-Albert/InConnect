@@ -24,6 +24,15 @@ export default function Feed() {
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [expandedTopicIds, setExpandedTopicIds] = useState<string[]>([]);
+
+  const toggleExpand = (topicId: string) => {
+    setExpandedTopicIds(prev => 
+      prev.includes(topicId) 
+        ? prev.filter(id => id !== topicId) 
+        : [...prev, topicId]
+    );
+  };
 
   useEffect(() => {
     const fetchTopics = async () => {
@@ -97,9 +106,17 @@ export default function Feed() {
             <div className={styles.topicContent}>
               <h2 className={styles.topicTitle}>{topic.title}</h2>
               <div 
-                className={styles.topicExcerpt} 
+                className={`${styles.topicExcerpt} ${expandedTopicIds.includes(topic.id) ? styles.expanded : ''}`} 
                 dangerouslySetInnerHTML={{ __html: topic.content }}
               />
+              {topic.content && topic.content.length > 200 && (
+                <button 
+                  className={styles.readMoreBtn} 
+                  onClick={() => toggleExpand(topic.id)}
+                >
+                  {expandedTopicIds.includes(topic.id) ? 'Show Less' : 'Read More'}
+                </button>
+              )}
             </div>
 
             <div className={styles.topicTags}>

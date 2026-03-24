@@ -132,6 +132,28 @@
   overflow: hidden;
 }
 
+.topicExcerpt.expanded {
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+}
+
+.readMoreBtn {
+  background: none;
+  border: none;
+  color: var(--accent-primary);
+  font-weight: 500;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 8px;
+  transition: color 0.2s ease;
+}
+
+.readMoreBtn:hover {
+  text-decoration: underline;
+  opacity: 0.8;
+}
+
 .topicTags {
   display: flex;
   flex-wrap: wrap;
