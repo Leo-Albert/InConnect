@@ -55,6 +55,8 @@ export default function CreateTopic() {
   const [categoryId, setCategoryId] = useState('1'); 
   const [loading, setLoading] = useState(false);
 
+  const EditorClass: any = ClassicEditor;
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!title || !content) return;
@@ -108,7 +110,7 @@ export default function CreateTopic() {
           <label>Discussion Content</label>
           <div className={styles.editorWrapper}>
             <CKEditor
-              editor={ClassicEditor as any}
+              editor={EditorClass}
               data={content}
               config={{
                 toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'blockQuote', 'insertTable', 'undo', 'redo']
