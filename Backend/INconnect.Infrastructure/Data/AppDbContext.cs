@@ -232,6 +232,12 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Name)
                 .HasMaxLength(100)
                 .HasColumnName("name");
+            entity.Property(e => e.Passwordhash)
+                .HasMaxLength(255)
+                .HasColumnName("passwordhash");
+            entity.Property(e => e.Profileimage)
+                .HasMaxLength(255)
+                .HasColumnName("profileimage");
             entity.Property(e => e.Role)
                 .HasMaxLength(50)
                 .HasDefaultValueSql("'Contributor'::character varying")

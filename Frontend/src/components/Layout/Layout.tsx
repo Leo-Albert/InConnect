@@ -1,10 +1,12 @@
 import { FormEvent, useState } from 'react';
 import { Outlet, Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 import { Home, Search, PlusSquare, User, Bell } from 'lucide-react';
 import Swal from 'sweetalert2';
 import styles from './Layout.module.css';
 
 export default function Layout() {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [query, setQuery] = useState(searchParams.get('q') || '');
@@ -61,9 +63,24 @@ export default function Layout() {
                 <span>New Topic</span>
               </button>
             </Link>
-            <div className={styles.avatar} onClick={() => Swal.fire({ title: 'Profile Management Coming Soon!', icon: 'info', ...swalConfig })}>
-              <User size={20} />
-            </div>
+            {user ? (
+              <Link to="/profile" className={styles.avatarLink}>
+                <div className={styles.avatar}>
+                  {user.profileimage ? (
+                    <img src={`${import.meta.env.VITE_API_URL.replace('/api', '')}/profile-images/${user.profileimage}`} alt="Profile" className={styles.avatarImg} />
+                  ) : (
+                    <span className={styles.avatarInitial}>{user.name.charAt(0).toUpperCase()}</span>
+                  )}
+                </div>
+              </Link>
+            ) : (
+              <Link to="/auth" style={{textDecoration: 'none'}}>
+                <button className={`${styles.navButton} ${styles.loginButton}`}>
+                  <User size={18} />
+                  <span>Sign In</span>
+                </button>
+              </Link>
+            )}
           </nav>
         </div>
       </header>

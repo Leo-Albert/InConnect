@@ -1,3 +1,5 @@
+dotnet ef dbcontext scaffold "Name=ConnectionStrings:DefaultConnection" Npgsql.EntityFrameworkCore.PostgreSQL --project ../INconnect.Infrastructure --startup-project . --output-dir Data --context AppDbContext --force
+
 -- Create a function to auto-update UpdatedAt column
 CREATE OR REPLACE FUNCTION update_modified_column()
 RETURNS TRIGGER AS $$

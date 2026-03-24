@@ -53,8 +53,28 @@ namespace INconnect.API.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var createdTopic = await _topicService.CreateTopicAsync(createTopicDto);
-            return CreatedAtAction(nameof(GetTopic), new { id = createdTopic.Id }, createdTopic);
+            var token = Request.Cookies["AuthToken"];
+            if (string.IsNullOrEmpty(token))
+            {
+                token = Request.Headers.Authorization.FirstOrDefault()?.Split(" ").Last();
+            }
+
+            if (string.IsNullOrEmpty(token)) return Unauthorized("User must be logged in.");
+
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            try
+            {
+                var jwtToken = handler.ReadJwtToken(token);
+                var userIdStr = jwtToken.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (userIdStr == null || !Guid.TryParse(userIdStr, out var userId)) return Unauthorized("Invalid token.");
+
+                var createdTopic = await _topicService.CreateTopicAsync(createTopicDto, userId);
+                return CreatedAtAction(nameof(GetTopic), new { id = createdTopic.Id }, createdTopic);
+            }
+            catch
+            {
+                return Unauthorized("Invalid token.");
+            }
         }
     }
 }

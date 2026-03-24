@@ -17,6 +17,10 @@ public partial class User
 
     public DateTime? Createdat { get; set; }
 
+    public string? Passwordhash { get; set; }
+
+    public string? Profileimage { get; set; }
+
     public virtual ICollection<Bookmark> Bookmarks { get; set; } = new List<Bookmark>();
 
     public virtual ICollection<Comment> Comments { get; set; } = new List<Comment>();

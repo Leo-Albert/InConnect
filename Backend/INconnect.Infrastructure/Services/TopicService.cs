@@ -35,7 +35,7 @@ public class TopicService : ITopicService
                 CreatedAt = t.Createdat,
                 AuthorName = t.CreatedbyNavigation != null ? t.CreatedbyNavigation.Name : null,
                 CategoryName = t.Category != null ? t.Category.Name : null
-            })
+            }).OrderByDescending(t => t.CreatedAt)
             .ToListAsync();
     }
 
@@ -81,22 +81,16 @@ public class TopicService : ITopicService
             .FirstOrDefaultAsync();
     }
 
-    public async Task<TopicDto> CreateTopicAsync(CreateTopicDto createTopicDto)
+    public async Task<TopicDto> CreateTopicAsync(CreateTopicDto createTopicDto, Guid userId)
     {
         var topic = new INconnect.Infrastructure.Data.Topic
         {
             Id = Guid.NewGuid(),
             Title = createTopicDto.Title,
             Content = createTopicDto.Content,
-            Categoryid = createTopicDto.CategoryId
+            Categoryid = createTopicDto.CategoryId,
+            Createdby = userId
         };
-
-        // Temporarily grab the first registered user to be the Author of this Mock Post until JWT Auth connects
-        var firstUser = await _context.Users.FirstOrDefaultAsync();
-        if (firstUser != null) 
-        {
-            topic.Createdby = firstUser.Id;
-        }
 
         _context.Topics.Add(topic);
         await _context.SaveChangesAsync();
@@ -108,8 +102,8 @@ public class TopicService : ITopicService
             Content = topic.Content,
             LikesCount = 0,
             CommentsCount = 0,
-            CreatedAt = DateTime.UtcNow,
-            AuthorName = firstUser?.Name
+            CreatedAt = DateTime.UtcNow
+            // AuthorName will be populated on read normally, or we could fetch the user here. For now we can omit it since this DTO gets returned mostly id-based.
         };
     }
 }
