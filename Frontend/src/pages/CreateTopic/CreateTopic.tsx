@@ -108,7 +108,7 @@ export default function CreateTopic() {
           <label>Discussion Content</label>
           <div className={styles.editorWrapper}>
             <CKEditor
-              editor={ClassicEditor}
+              editor={ClassicEditor as any}
               data={content}
               config={{
                 toolbar: ['heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', '|', 'blockQuote', 'insertTable', 'undo', 'redo']
