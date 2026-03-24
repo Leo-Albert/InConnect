@@ -62,8 +62,11 @@ export const api = {
     }) as Promise<any>,
   },
   topics: {
-    getFeed: (page = 1, pageSize = 10) => apiInstance.get(`/topics?page=${page}&pageSize=${pageSize}`) as Promise<any>,
+    getFeed: (category?: string, page = 1, pageSize = 10) => apiInstance.get(`/topics?${category ? `category=${encodeURIComponent(category)}&` : ''}page=${page}&pageSize=${pageSize}`) as Promise<any>,
+    getById: (id: string) => apiInstance.get(`/topics/${id}`) as Promise<any>,
     search: (query: string, page = 1, pageSize = 10) => apiInstance.get(`/topics/search?query=${encodeURIComponent(query)}&page=${page}&pageSize=${pageSize}`) as Promise<any>,
-    create: (payload: { title: string; content: string; categoryId: number }) => apiInstance.post('/topics', payload) as Promise<any>
+    create: (payload: { title: string; content: string; categoryId: number }) => apiInstance.post('/topics', payload) as Promise<any>,
+    update: (id: string, payload: { title: string; content: string; categoryId: number }) => apiInstance.put(`/topics/${id}`, payload) as Promise<any>,
+    delete: (id: string) => apiInstance.delete(`/topics/${id}`) as Promise<any>
   }
 };

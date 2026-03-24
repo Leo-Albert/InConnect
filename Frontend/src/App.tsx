@@ -5,6 +5,7 @@ import CreateTopic from './pages/CreateTopic/CreateTopic';
 import { useAuth } from './contexts/AuthContext';
 import AuthPage from './pages/Auth/AuthPage';
 import Profile from './pages/Profile/Profile';
+import EditTopic from './pages/EditTopic/EditTopic';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -31,6 +32,7 @@ function App() {
         <Route path="/" element={<RequireAuth><Layout /></RequireAuth>}>
           <Route index element={<Feed />} />
           <Route path="create" element={<CreateTopic />} />
+          <Route path="edit/:id" element={<EditTopic />} />
           <Route path="profile" element={<Profile />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

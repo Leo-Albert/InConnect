@@ -10,5 +10,6 @@ public class TopicDto
     public int? CommentsCount { get; set; }
     public DateTime? CreatedAt { get; set; }
     public string? AuthorName { get; set; }
+    public Guid AuthorId { get; set; }
     public string? CategoryName { get; set; }
 }

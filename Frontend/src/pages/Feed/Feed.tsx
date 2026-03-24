@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Heart, MessageSquare, Bookmark, Share2, MoreHorizontal, Loader2 } from 'lucide-react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import { Heart, MessageSquare, Bookmark, Share2, MoreHorizontal, Loader2, Edit, Trash2 } from 'lucide-react';
 import styles from './Feed.module.css';
 import { api } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
+import Swal from 'sweetalert2';
 import { formatDistanceToNow } from 'date-fns';
 
 interface Topic {
@@ -13,25 +15,67 @@ interface Topic {
   commentsCount: number;
   createdAt: string;
   authorName: string | null;
+  authorId: string;
   categoryName: string | null;
   tags?: string[];
 }
 
 export default function Feed() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q');
-  
+  const category = searchParams.get('category');
+
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expandedTopicIds, setExpandedTopicIds] = useState<string[]>([]);
 
   const toggleExpand = (topicId: string) => {
-    setExpandedTopicIds(prev => 
-      prev.includes(topicId) 
-        ? prev.filter(id => id !== topicId) 
+    setExpandedTopicIds(prev =>
+      prev.includes(topicId)
+        ? prev.filter(id => id !== topicId)
         : [...prev, topicId]
     );
+  };
+
+  const handleDelete = async (id: string) => {
+    const result = await Swal.fire({
+      title: 'Are you sure?',
+      text: "You won't be able to revert this!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: 'var(--accent-danger)',
+      cancelButtonColor: 'var(--text-muted)',
+      confirmButtonText: 'Yes, delete it!',
+      background: 'var(--bg-surface)',
+      color: 'var(--text-primary)'
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.topics.delete(id);
+        setTopics(prev => prev.filter(t => t.id !== id));
+        Swal.fire({
+          title: 'Deleted!',
+          text: 'Your post has been deleted.',
+          icon: 'success',
+          timer: 2000,
+          showConfirmButton: false,
+          background: 'var(--bg-surface)',
+          color: 'var(--text-primary)'
+        });
+      } catch (err: any) {
+        Swal.fire({
+          title: 'Error!',
+          text: err.message || 'Failed to delete the topic.',
+          icon: 'error',
+          background: 'var(--bg-surface)',
+          color: 'var(--text-primary)'
+        });
+      }
+    }
   };
 
   useEffect(() => {
@@ -39,22 +83,23 @@ export default function Feed() {
       setLoading(true);
       setError('');
       try {
+        debugger
         let data;
         if (searchQuery) {
           data = await api.topics.search(searchQuery);
         } else {
-          data = await api.topics.getFeed();
+          data = await api.topics.getFeed(category || undefined);
         }
-        setTopics(data || []);
-      } catch (err) {
-        setError('Failed to load topics! Please make sure your backend API is running in Visual Studio.');
+        console.log('[Feed] Fetched topics:', data);
+        setTopics(Array.isArray(data) ? data : data?.topics || []);
+        if (user) console.log('[Feed] Current User ID:', (user as any).id || (user as any).Id);
       } finally {
         setLoading(false);
       }
     };
 
     fetchTopics();
-  }, [searchQuery]);
+  }, [searchQuery, category, user]);
 
   return (
     <div className={styles.feedContainer}>
@@ -98,20 +143,33 @@ export default function Feed() {
                   {topic.createdAt ? formatDistanceToNow(new Date(topic.createdAt), { addSuffix: true }) : 'Recently'}
                 </p>
               </div>
-              <button className={styles.moreButton}>
-                <MoreHorizontal size={20} />
-              </button>
+
+              <div className={styles.headerActions}>
+                {user && (user.id || (user as any).Id || (user as any).ID)?.toString().toLowerCase() === topic.authorId?.toString().toLowerCase() && (
+                  <div className={styles.ownerActions}>
+                    <button className={styles.iconBtn} title="Edit Post" onClick={() => navigate(`/edit/${topic.id}`)}>
+                      <Edit size={16} />
+                    </button>
+                    <button className={`${styles.iconBtn} ${styles.deleteBtn}`} title="Delete Post" onClick={() => handleDelete(topic.id)}>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                )}
+                <button className={styles.moreButton}>
+                  <MoreHorizontal size={20} />
+                </button>
+              </div>
             </div>
 
             <div className={styles.topicContent}>
               <h2 className={styles.topicTitle}>{topic.title}</h2>
-              <div 
-                className={`${styles.topicExcerpt} ${expandedTopicIds.includes(topic.id) ? styles.expanded : ''}`} 
+              <div
+                className={`${styles.topicExcerpt} ${expandedTopicIds.includes(topic.id) ? styles.expanded : ''}`}
                 dangerouslySetInnerHTML={{ __html: topic.content }}
               />
               {topic.content && topic.content.length > 200 && (
-                <button 
-                  className={styles.readMoreBtn} 
+                <button
+                  className={styles.readMoreBtn}
                   onClick={() => toggleExpand(topic.id)}
                 >
                   {expandedTopicIds.includes(topic.id) ? 'Show Less' : 'Read More'}
@@ -136,7 +194,7 @@ export default function Feed() {
                   <span>{topic.commentsCount || 0}</span>
                 </button>
               </div>
-              
+
               <div className={styles.actionsBox}>
                 <button className={styles.actionButton}>
                   <Bookmark size={18} />

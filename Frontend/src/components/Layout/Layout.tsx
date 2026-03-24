@@ -1,12 +1,14 @@
 import { FormEvent, useState } from 'react';
 import { Outlet, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Home, Search, PlusSquare, User, Bell } from 'lucide-react';
+import { Home, Search, PlusSquare, User, Bell, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../../contexts/ThemeContext';
 import Swal from 'sweetalert2';
 import styles from './Layout.module.css';
 
 export default function Layout() {
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [query, setQuery] = useState(searchParams.get('q') || '');
@@ -54,6 +56,9 @@ export default function Layout() {
             <Link to="/" className={styles.navButton} aria-label="Home">
               <Home size={22} className={!searchParams.get('q') && !activeCategory ? styles.activeIcon : ''} />
             </Link>
+            <button className={styles.navButton} aria-label="Toggle Theme" onClick={toggleTheme}>
+              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
             <button className={styles.navButton} aria-label="Notifications" onClick={() => Swal.fire({ title: 'Notifications Coming Soon!', icon: 'info', ...swalConfig })}>
               <Bell size={22} />
             </button>

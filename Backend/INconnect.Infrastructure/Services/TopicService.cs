@@ -18,11 +18,18 @@ public class TopicService : ITopicService
         _context = context;
     }
 
-    public async Task<IEnumerable<TopicDto>> GetFeedAsync(int page, int pageSize)
+    public async Task<IEnumerable<TopicDto>> GetFeedAsync(int page, int pageSize, string? category = null)
     {
         var skip = (page - 1) * pageSize;
-        return await _context.Topics
-            .OrderByDescending(t => ((t.Likescount ?? 0) * 2 + (t.Commentscount ?? 0)))
+        var query = _context.Topics.AsQueryable();
+
+        if (!string.IsNullOrEmpty(category))
+        {
+            query = query.Where(t => t.Category != null && t.Category.Name == category);
+        }
+
+        return await query
+            .OrderByDescending(t => t.Createdat)
             .Skip(skip)
             .Take(pageSize)
             .Select(t => new TopicDto
@@ -34,8 +41,9 @@ public class TopicService : ITopicService
                 CommentsCount = t.Commentscount,
                 CreatedAt = t.Createdat,
                 AuthorName = t.CreatedbyNavigation != null ? t.CreatedbyNavigation.Name : null,
+                AuthorId = t.Createdby ?? Guid.Empty,
                 CategoryName = t.Category != null ? t.Category.Name : null
-            }).OrderByDescending(t => t.CreatedAt)
+            })
             .ToListAsync();
     }
 
@@ -58,6 +66,7 @@ public class TopicService : ITopicService
                 CommentsCount = t.Commentscount,
                 CreatedAt = t.Createdat,
                 AuthorName = t.CreatedbyNavigation != null ? t.CreatedbyNavigation.Name : null,
+                AuthorId = t.Createdby ?? Guid.Empty,
                 CategoryName = t.Category != null ? t.Category.Name : null
             })
             .ToListAsync();
@@ -76,6 +85,7 @@ public class TopicService : ITopicService
                 CommentsCount = t.Commentscount,
                 CreatedAt = t.Createdat,
                 AuthorName = t.CreatedbyNavigation != null ? t.CreatedbyNavigation.Name : null,
+                AuthorId = t.Createdby ?? Guid.Empty,
                 CategoryName = t.Category != null ? t.Category.Name : null
             })
             .FirstOrDefaultAsync();
@@ -102,8 +112,44 @@ public class TopicService : ITopicService
             Content = topic.Content,
             LikesCount = 0,
             CommentsCount = 0,
-            CreatedAt = DateTime.UtcNow
-            // AuthorName will be populated on read normally, or we could fetch the user here. For now we can omit it since this DTO gets returned mostly id-based.
+            CreatedAt = DateTime.UtcNow,
+            AuthorId = userId
         };
+    }
+
+    public async Task<TopicDto?> UpdateTopicAsync(Guid id, CreateTopicDto updateTopicDto, Guid userId)
+    {
+        var topic = await _context.Topics.FirstOrDefaultAsync(t => t.Id == id);
+        if (topic == null || topic.Createdby != userId)
+            return null;
+
+        topic.Title = updateTopicDto.Title;
+        topic.Content = updateTopicDto.Content;
+        topic.Categoryid = updateTopicDto.CategoryId;
+        topic.Updatedat = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return new TopicDto
+        {
+            Id = topic.Id,
+            Title = topic.Title,
+            Content = topic.Content,
+            LikesCount = topic.Likescount,
+            CommentsCount = topic.Commentscount,
+            CreatedAt = topic.Createdat,
+            AuthorId = userId
+        };
+    }
+
+    public async Task<bool> DeleteTopicAsync(Guid id, Guid userId)
+    {
+        var topic = await _context.Topics.FirstOrDefaultAsync(t => t.Id == id);
+        if (topic == null || topic.Createdby != userId)
+            return false;
+
+        _context.Topics.Remove(topic);
+        await _context.SaveChangesAsync();
+        return true;
     }
 }

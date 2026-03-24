@@ -19,9 +19,9 @@ namespace INconnect.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TopicDto>>> GetTopics([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<ActionResult<IEnumerable<TopicDto>>> GetTopics([FromQuery] string? category = null, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            var topics = await _topicService.GetFeedAsync(page, pageSize);
+            var topics = await _topicService.GetFeedAsync(page, pageSize, category);
             return Ok(topics);
         }
 
@@ -75,6 +75,50 @@ namespace INconnect.API.Controllers
             {
                 return Unauthorized("Invalid token.");
             }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult<TopicDto>> UpdateTopic(Guid id, [FromBody] CreateTopicDto updateTopicDto)
+        {
+            var token = Request.Cookies["AuthToken"];
+            if (string.IsNullOrEmpty(token)) token = Request.Headers.Authorization.FirstOrDefault()?.Split(" ").Last();
+            if (string.IsNullOrEmpty(token)) return Unauthorized();
+
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            try
+            {
+                var jwtToken = handler.ReadJwtToken(token);
+                var userIdStr = jwtToken.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (userIdStr == null || !Guid.TryParse(userIdStr, out var userId)) return Unauthorized();
+
+                var updatedTopic = await _topicService.UpdateTopicAsync(id, updateTopicDto, userId);
+                if (updatedTopic == null) return Forbid(); // Or NotFound if not exists, but Forbid if wrong user
+
+                return Ok(updatedTopic);
+            }
+            catch { return Unauthorized(); }
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteTopic(Guid id)
+        {
+            var token = Request.Cookies["AuthToken"];
+            if (string.IsNullOrEmpty(token)) token = Request.Headers.Authorization.FirstOrDefault()?.Split(" ").Last();
+            if (string.IsNullOrEmpty(token)) return Unauthorized();
+
+            var handler = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler();
+            try
+            {
+                var jwtToken = handler.ReadJwtToken(token);
+                var userIdStr = jwtToken.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                if (userIdStr == null || !Guid.TryParse(userIdStr, out var userId)) return Unauthorized();
+
+                var success = await _topicService.DeleteTopicAsync(id, userId);
+                if (!success) return Forbid();
+
+                return NoContent();
+            }
+            catch { return Unauthorized(); }
         }
     }
 }
