@@ -51,19 +51,19 @@ export const setAuthToken = (token: string | null) => {
 
 export const api = {
   auth: {
-    me: async () => (await apiInstance.get('/auth/me')) as any,
-    login: async (payload: any) => (await apiInstance.post('/auth/login', payload)) as any,
-    register: async (payload: any) => (await apiInstance.post('/auth/register', payload)) as any,
-    logout: async () => (await apiInstance.post('/auth/logout')) as any,
+    me: () => apiInstance.get('/auth/me') as Promise<any>,
+    login: (payload: any) => apiInstance.post('/auth/login', payload) as Promise<any>,
+    register: (payload: any) => apiInstance.post('/auth/register', payload) as Promise<any>,
+    logout: () => apiInstance.post('/auth/logout') as Promise<any>,
   },
   profile: {
     uploadImage: (formData: FormData) => apiInstance.post('/profile/upload-image', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
-    }),
+    }) as Promise<any>,
   },
   topics: {
-    getFeed: (page = 1, pageSize = 10) => apiInstance.get(`/topics?page=${page}&pageSize=${pageSize}`),
-    search: (query: string, page = 1, pageSize = 10) => apiInstance.get(`/topics/search?query=${encodeURIComponent(query)}&page=${page}&pageSize=${pageSize}`),
-    create: (payload: { title: string; content: string; categoryId: number }) => apiInstance.post('/topics', payload)
+    getFeed: (page = 1, pageSize = 10) => apiInstance.get(`/topics?page=${page}&pageSize=${pageSize}`) as Promise<any>,
+    search: (query: string, page = 1, pageSize = 10) => apiInstance.get(`/topics/search?query=${encodeURIComponent(query)}&page=${page}&pageSize=${pageSize}`) as Promise<any>,
+    create: (payload: { title: string; content: string; categoryId: number }) => apiInstance.post('/topics', payload) as Promise<any>
   }
 };
