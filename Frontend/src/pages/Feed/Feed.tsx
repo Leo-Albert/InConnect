@@ -33,6 +33,12 @@ export default function Feed() {
   const [error, setError] = useState('');
   const [expandedTopicIds, setExpandedTopicIds] = useState<string[]>([]);
 
+  // Infinite Scroll States
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const pageSize = 10;
+
   const toggleExpand = (topicId: string) => {
     setExpandedTopicIds(prev =>
       prev.includes(topicId)
@@ -79,27 +85,82 @@ export default function Feed() {
     }
   };
 
+  // Reset and Fetch Initial Page
   useEffect(() => {
-    const fetchTopics = async () => {
+    const fetchInitialTopics = async () => {
       setLoading(true);
       setError('');
+      setPage(1);
+      setHasMore(true);
+      
       try {
         let data;
         if (searchQuery) {
-          data = await api.topics.search(searchQuery);
+          data = await api.topics.search(searchQuery, 1, pageSize);
         } else {
-          data = await api.topics.getFeed(category || undefined, tags.length > 0 ? tags : undefined);
+          data = await api.topics.getFeed(category || undefined, tags.length > 0 ? tags : undefined, undefined, 1, pageSize);
         }
-        console.log('[Feed] Fetched topics:', data);
-        setTopics(Array.isArray(data) ? data : data?.topics || []);
-        if (user) console.log('[Feed] Current User ID:', (user as any).id || (user as any).Id);
+        
+        const fetchedTopics = Array.isArray(data) ? data : data?.topics || [];
+        setTopics(fetchedTopics);
+        setHasMore(fetchedTopics.length === pageSize);
+      } catch (err: any) {
+        setError('Failed to load initial feed.');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchTopics();
+    fetchInitialTopics();
   }, [searchQuery, category, tags.join(','), user]);
+
+  // Fetch Next Page
+  const fetchMoreTopics = async () => {
+    if (isFetchingMore || !hasMore) return;
+
+    setIsFetchingMore(true);
+    const nextPage = page + 1;
+    
+    try {
+      let data;
+      if (searchQuery) {
+        data = await api.topics.search(searchQuery, nextPage, pageSize);
+      } else {
+        data = await api.topics.getFeed(category || undefined, tags.length > 0 ? tags : undefined, undefined, nextPage, pageSize);
+      }
+      
+      const newTopics = Array.isArray(data) ? data : data?.topics || [];
+      if (newTopics.length > 0) {
+        setTopics(prev => [...prev, ...newTopics]);
+        setPage(nextPage);
+      }
+      
+      setHasMore(newTopics.length === pageSize);
+    } catch (err) {
+      console.error('Failed to fetch more topics:', err);
+    } finally {
+      setIsFetchingMore(false);
+    }
+  };
+
+  // Intersection Observer for Infinite Scroll
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading && !isFetchingMore) {
+          fetchMoreTopics();
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    const sentinel = document.getElementById('scroll-sentinel');
+    if (sentinel) observer.observe(sentinel);
+
+    return () => {
+      if (sentinel) observer.unobserve(sentinel);
+    };
+  }, [hasMore, loading, isFetchingMore, page]);
 
   return (
     <div className={styles.feedContainer}>
@@ -140,7 +201,7 @@ export default function Feed() {
           </div>
         )}
 
-        {!loading && topics.map(topic => (
+        {topics.map(topic => (
           <article key={topic.id} className={`glass-panel animate-fade-in ${styles.topicCard}`}>
             <div className={styles.topicHeader}>
               <div 
@@ -231,6 +292,22 @@ export default function Feed() {
             </div>
           </article>
         ))}
+
+        {/* Infinite Scroll Sentinel & Loader */}
+        <div id="scroll-sentinel" className={styles.sentinel}>
+          {isFetchingMore && (
+            <div className={styles.fetchingMoreLoader}>
+              <Loader2 className={styles.spinner} size={24} />
+              <span>Loading more topics...</span>
+            </div>
+          )}
+          {!hasMore && topics.length > 0 && !loading && (
+            <div className={styles.endOfFeed}>
+              <p>You've reached the end of the technical stream.</p>
+              <span>Stay curious, keep coding.</span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

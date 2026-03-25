@@ -29,12 +29,16 @@ public class ProfileController : ControllerBase
         var user = await _context.Users.FindAsync(id);
         if (user == null) return NotFound();
 
+        var contributionCount = await _context.Topics
+            .CountAsync(t => t.Createdby == id && (t.Isdeleted == false || t.Isdeleted == null));
+
         return Ok(new
         {
             id = user.Id,
             name = user.Name,
             email = user.Email,
-            profileImage = user.Profileimage
+            profileImage = user.Profileimage,
+            contributionCount = contributionCount
         });
     }
 

@@ -23,6 +23,7 @@ interface ProfileUser {
   name: string;
   email: string;
   profileImage: string | null;
+  contributionCount: number;
 }
 
 export default function Profile() {
@@ -32,9 +33,23 @@ export default function Profile() {
   
   const [profileUser, setProfileUser] = useState<ProfileUser | null>(null);
   const [isOwnProfile, setIsOwnProfile] = useState(false);
-  // const [uploading, setUploading] = useState(false);
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Account Management States
+  const [isEmailEditing, setIsEmailEditing] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [updating, setUpdating] = useState(false);
+
+  // Infinite Scroll States
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
+  const pageSize = 10;
 
   useEffect(() => {
     loadProfileData();
@@ -42,55 +57,55 @@ export default function Profile() {
 
   const loadProfileData = async () => {
     setLoading(true);
+    setPage(1);
+    setHasMore(true);
     try {
-      // Determine if we are viewing current user or someone else
       const targetId = id || currentUser?.id;
-      
       if (!targetId) {
         if (!id) navigate('/auth'); 
         return;
       }
-
       setIsOwnProfile(targetId === currentUser?.id);
 
-      // Fetch User Details
-      if (targetId === currentUser?.id) {
-        // Use local auth data for performance if it's "me"
-        setProfileUser({
-          id: currentUser.id,
-          name: currentUser.name,
-          email: currentUser.email,
-          profileImage: currentUser.profileimage || null
-        });
-      } else {
-        const userData = await api.profile.getById(targetId);
-        setProfileUser(userData);
-      }
+      // Always fetch fresh profile data to get the latest contribution count
+      const userData = await api.profile.getById(targetId);
+      setProfileUser(userData);
 
-      // Fetch User Topics
-      const topicsData = await api.topics.getFeed(undefined, undefined, targetId);
-      setTopics(Array.isArray(topicsData) ? topicsData : topicsData?.topics || []);
-
+      // Fetch Initial Topics
+      const topicsData = await api.topics.getFeed(undefined, undefined, targetId, 1, pageSize);
+      const fetchedTopics = Array.isArray(topicsData) ? topicsData : topicsData?.topics || [];
+      setTopics(fetchedTopics);
+      setHasMore(fetchedTopics.length === pageSize);
     } catch (err) {
       console.error('Failed to load profile:', err);
-      Swal.fire({ 
-        title: 'Error', 
-        text: 'User not found or failed to load profile.', 
-        icon: 'error',
-        background: 'var(--bg-surface)',
-        color: 'var(--text-primary)'
-      });
+      Swal.fire({ title: 'Error', text: 'User not found or failed to load profile.', icon: 'error', background: 'var(--bg-surface)', color: 'var(--text-primary)' });
       navigate('/');
     } finally {
       setLoading(false);
     }
   };
 
-/*
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    ... (omitted content for brevity, I'll just comment the block)
+  const fetchMoreTopics = async () => {
+    if (isFetchingMore || !hasMore) return;
+    setIsFetchingMore(true);
+    const nextPage = page + 1;
+    const targetId = id || currentUser?.id;
+
+    try {
+      const topicsData = await api.topics.getFeed(undefined, undefined, targetId, nextPage, pageSize);
+      const newTopics = Array.isArray(topicsData) ? topicsData : topicsData?.topics || [];
+      
+      if (newTopics.length > 0) {
+        setTopics(prev => [...prev, ...newTopics]);
+        setPage(nextPage);
+      }
+      setHasMore(newTopics.length === pageSize);
+    } catch (err) {
+      console.error('Failed to fetch more topics:', err);
+    } finally {
+      setIsFetchingMore(false);
+    }
   };
-*/
 
   const handleDeleteTopic = async (topicId: string, title: string) => {
     const result = await Swal.fire({
@@ -120,15 +135,6 @@ export default function Profile() {
     logout();
     navigate('/');
   };
-
-  const [isEmailEditing, setIsEmailEditing] = useState(false);
-  const [newEmail, setNewEmail] = useState('');
-  
-  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [updating, setUpdating] = useState(false);
 
   const handleUpdateEmail = async () => {
     if (!newEmail || newEmail === profileUser?.email) {
@@ -171,6 +177,25 @@ export default function Profile() {
       setUpdating(false);
     }
   };
+
+  // Profile Scroll Observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading && !isFetchingMore) {
+          fetchMoreTopics();
+        }
+      },
+      { threshold: 1.0 }
+    );
+
+    const sentinel = document.getElementById('profile-scroll-sentinel');
+    if (sentinel) observer.observe(sentinel);
+
+    return () => {
+      if (sentinel) observer.unobserve(sentinel);
+    };
+  }, [hasMore, loading, isFetchingMore, page, id]);
 
   if (loading && !profileUser) {
     return (
@@ -252,7 +277,7 @@ export default function Profile() {
 
           <div className={styles.statsRow}>
             <div className={styles.statItem}>
-              <span className={styles.statValue}>{topics.length}</span>
+              <span className={styles.statValue}>{profileUser.contributionCount}</span>
               <span className={styles.statLabel}>Contributions</span>
             </div>
           </div>
@@ -328,46 +353,63 @@ export default function Profile() {
         </h2>
         
         {topics.length > 0 ? (
-          <div className={styles.topicGrid}>
-            {topics.map(topic => (
-              <div key={topic.id} className={`glass-panel ${styles.topicCard}`}>
-                <div className={styles.topicHeader}>
-                  <span className={styles.topicCategory}>{topic.categoryName || 'General'}</span>
-                  {isOwnProfile && (
-                    <div className={styles.topicActions}>
-                      <button onClick={() => navigate(`/edit/${topic.id}`)} title="Edit Topic">
-                        <Edit2 size={16} />
-                      </button>
-                      <button onClick={() => handleDeleteTopic(topic.id, topic.title)} title="Delete Topic" className={styles.deleteBtn}>
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  )}
-                </div>
-                
-                <h3 className={styles.topicTitle} onClick={() => navigate(`/topic/${topic.id}`)}>
-                  {topic.title}
-                </h3>
-                
-                <div className={styles.topicTags}>
-                  {topic.tags?.slice(0, 3).map(tag => (
-                    <span key={tag} className={styles.tag}>#{tag}</span>
-                  ))}
-                  {topic.tags && topic.tags.length > 3 && <span className={styles.moreTags}>+{topic.tags.length - 3}</span>}
-                </div>
+          <>
+            <div className={styles.topicGrid}>
+              {topics.map(topic => (
+                <div key={topic.id} className={`glass-panel ${styles.topicCard}`}>
+                  <div className={styles.topicHeader}>
+                    <span className={styles.topicCategory}>{topic.categoryName || 'General'}</span>
+                    {isOwnProfile && (
+                      <div className={styles.topicActions}>
+                        <button onClick={() => navigate(`/edit/${topic.id}`)} title="Edit Topic">
+                          <Edit2 size={16} />
+                        </button>
+                        <button onClick={() => handleDeleteTopic(topic.id, topic.title)} title="Delete Topic" className={styles.deleteBtn}>
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <h3 className={styles.topicTitle} onClick={() => navigate(`/topic/${topic.id}`)}>
+                    {topic.title}
+                  </h3>
+                  
+                  <div className={styles.topicTags}>
+                    {topic.tags?.slice(0, 3).map(tag => (
+                      <span key={tag} className={styles.tag}>#{tag}</span>
+                    ))}
+                    {topic.tags && topic.tags.length > 3 && <span className={styles.moreTags}>+{topic.tags.length - 3}</span>}
+                  </div>
 
-                <div className={styles.topicFooter}>
-                  <span className={styles.topicDate}>
-                    {formatDistanceToNow(new Date(topic.createdAt), { addSuffix: true })}
-                  </span>
-                  <div className={styles.topicStats}>
-                    <div className={styles.stat}><Heart size={14} /> {topic.likesCount}</div>
-                    <div className={styles.stat}><MessageSquare size={14} /> {topic.commentsCount}</div>
+                  <div className={styles.topicFooter}>
+                    <span className={styles.topicDate}>
+                      {formatDistanceToNow(new Date(topic.createdAt), { addSuffix: true })}
+                    </span>
+                    <div className={styles.topicStats}>
+                      <div className={styles.stat}><Heart size={14} /> {topic.likesCount}</div>
+                      <div className={styles.stat}><MessageSquare size={14} /> {topic.commentsCount}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+
+            {/* Profile Infinite Scroll Sentinel */}
+            <div id="profile-scroll-sentinel" style={{ padding: '20px', textAlign: 'center', minHeight: '80px' }}>
+              {isFetchingMore && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', color: 'var(--text-secondary)' }}>
+                  <Loader2 className={styles.animateSpin} size={20} />
+                  <span>Loading more contributions...</span>
+                </div>
+              )}
+              {!hasMore && topics.length > 0 && (
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', opacity: 0.7 }}>
+                  No more contributions to show.
+                </p>
+              )}
+            </div>
+          </>
         ) : (
           <div className={styles.emptyState}>
             <p>{isOwnProfile ? "You haven't created any topics yet." : "No contributions yet."}</p>
