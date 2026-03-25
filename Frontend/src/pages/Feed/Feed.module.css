@@ -198,13 +198,21 @@
 }
 
 .tagBadge {
-  color: var(--text-muted);
-  font-size: 0.85rem;
+  background: rgba(93, 93, 255, 0.08);
+  color: #818cf8;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid rgba(129, 140, 248, 0.2);
+  transition: all var(--transition-fast);
+  cursor: pointer;
 }
 
 .tagBadge:hover {
-  color: var(--text-primary);
-  cursor: pointer;
+  background: #818cf8;
+  color: white;
+  transform: translateY(-1px);
 }
 
 .engagementBar {
@@ -271,3 +279,45 @@
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+.searchHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 16px 24px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+}
+
+.searchHeader h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.searchQuote {
+  color: var(--accent-primary);
+  font-style: italic;
+}
+
+.clearSearchBtn {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--accent-primary);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.clearSearchBtn:hover {
+  background: var(--accent-primary);
+  color: white;
+  transform: translateY(-1px);
+}
+

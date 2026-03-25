@@ -26,6 +26,7 @@ export default function Feed() {
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q');
   const category = searchParams.get('category');
+  const tags = searchParams.getAll('tags');
 
   const [topics, setTopics] = useState<Topic[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,12 +84,11 @@ export default function Feed() {
       setLoading(true);
       setError('');
       try {
-        debugger
         let data;
         if (searchQuery) {
           data = await api.topics.search(searchQuery);
         } else {
-          data = await api.topics.getFeed(category || undefined);
+          data = await api.topics.getFeed(category || undefined, tags.length > 0 ? tags : undefined);
         }
         console.log('[Feed] Fetched topics:', data);
         setTopics(Array.isArray(data) ? data : data?.topics || []);
@@ -99,10 +99,19 @@ export default function Feed() {
     };
 
     fetchTopics();
-  }, [searchQuery, category, user]);
+  }, [searchQuery, category, tags.join(','), user]);
 
   return (
     <div className={styles.feedContainer}>
+      {searchQuery && (
+        <div className={styles.searchHeader}>
+          <h3>Search results for: <span className={styles.searchQuote}>"{searchQuery}"</span></h3>
+          <button className={styles.clearSearchBtn} onClick={() => navigate('/')}>
+            Clear Search
+          </button>
+        </div>
+      )}
+      
       <div className={styles.feedHeader}>
         <div className={styles.tabs}>
           <button className={`${styles.tab} ${styles.activeTab}`}>
@@ -134,11 +143,22 @@ export default function Feed() {
         {!loading && topics.map(topic => (
           <article key={topic.id} className={`glass-panel animate-fade-in ${styles.topicCard}`}>
             <div className={styles.topicHeader}>
-              <div className={styles.authorAvatar}>
+              <div 
+                className={styles.authorAvatar} 
+                onClick={() => navigate(`/profile/${topic.authorId}`)}
+                style={{ cursor: 'pointer' }}
+                title={`View ${topic.authorName}'s profile`}
+              >
                 {topic.authorName ? topic.authorName.charAt(0).toUpperCase() : 'U'}
               </div>
               <div className={styles.authorMeta}>
-                <h4 className={styles.authorName}>{topic.authorName || 'Unknown Developer'}</h4>
+                <h4 
+                  className={styles.authorName}
+                  onClick={() => navigate(`/profile/${topic.authorId}`)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {topic.authorName || 'Unknown Developer'}
+                </h4>
                 <p className={styles.authorRole}>
                   {topic.createdAt ? formatDistanceToNow(new Date(topic.createdAt), { addSuffix: true }) : 'Recently'}
                 </p>
@@ -162,7 +182,9 @@ export default function Feed() {
             </div>
 
             <div className={styles.topicContent}>
-              <h2 className={styles.topicTitle}>{topic.title}</h2>
+              <h2 className={styles.topicTitle} onClick={() => navigate(`/topic/${topic.id}`)}>
+                {topic.title}
+              </h2>
               <div
                 className={`${styles.topicExcerpt} ${expandedTopicIds.includes(topic.id) ? styles.expanded : ''}`}
                 dangerouslySetInnerHTML={{ __html: topic.content }}
@@ -181,6 +203,9 @@ export default function Feed() {
               {topic.categoryName && (
                 <span className={styles.categoryBadge}>{topic.categoryName}</span>
               )}
+              {topic.tags && topic.tags.map(tag => (
+                <span key={tag} className={styles.tagBadge}>#{tag}</span>
+              ))}
             </div>
 
             <div className={styles.engagementBar}>

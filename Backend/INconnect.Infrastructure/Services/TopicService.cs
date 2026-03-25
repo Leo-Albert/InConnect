@@ -12,13 +12,15 @@ namespace INconnect.Infrastructure.Services;
 public class TopicService : ITopicService
 {
     private readonly AppDbContext _context;
+    private readonly ITagService _tagService;
 
-    public TopicService(AppDbContext context)
+    public TopicService(AppDbContext context, ITagService tagService)
     {
         _context = context;
+        _tagService = tagService;
     }
 
-    public async Task<IEnumerable<TopicDto>> GetFeedAsync(int page, int pageSize, string? category = null)
+    public async Task<IEnumerable<TopicDto>> GetFeedAsync(int page, int pageSize, string? category = null, List<string>? tags = null)
     {
         var skip = (page - 1) * pageSize;
         var query = _context.Topics.AsQueryable();
@@ -26,6 +28,15 @@ public class TopicService : ITopicService
         if (!string.IsNullOrEmpty(category))
         {
             query = query.Where(t => t.Category != null && t.Category.Name == category);
+        }
+
+        if (tags != null && tags.Any())
+        {
+            // AND filter: Topic must have ALL requested tags
+            foreach (var tag in tags)
+            {
+                query = query.Where(t => t.Tags.Any(tg => tg.Name == tag));
+            }
         }
 
         return await query
@@ -42,19 +53,28 @@ public class TopicService : ITopicService
                 CreatedAt = t.Createdat,
                 AuthorName = t.CreatedbyNavigation != null ? t.CreatedbyNavigation.Name : null,
                 AuthorId = t.Createdby ?? Guid.Empty,
-                CategoryName = t.Category != null ? t.Category.Name : null
+                CategoryName = t.Category != null ? t.Category.Name : null,
+                Tags = t.Tags.Select(tag => tag.Name).ToList()
             })
             .ToListAsync();
     }
 
-    public async Task<IEnumerable<TopicDto>> SearchAsync(string query, int page, int pageSize)
+    public async Task<IEnumerable<TopicDto>> SearchAsync(string query, int page = 1, int pageSize = 10)
     {
+        var q = query.ToLower();
         var skip = (page - 1) * pageSize;
-        var formattedQuery = string.Join(" | ", query.Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        
+        // Use a combination of Full Text Search (if available) and simple Contains for Tags
+        var dbQuery = _context.Topics.AsQueryable();
+        
+        dbQuery = dbQuery.Where(t => 
+            t.Title.ToLower().Contains(q) || 
+            t.Content.ToLower().Contains(q) ||
+            t.Tags.Any(tag => tag.Name.ToLower().Contains(q))
+        );
 
-        return await _context.Topics
-            .Where(t => t.Searchvector != null && t.Searchvector.Matches(EF.Functions.ToTsQuery("english", formattedQuery)))
-            .OrderByDescending(t => t.Searchvector!.Rank(EF.Functions.ToTsQuery("english", formattedQuery)))
+        return await dbQuery
+            .OrderByDescending(t => t.Createdat)
             .Skip(skip)
             .Take(pageSize)
             .Select(t => new TopicDto
@@ -67,7 +87,8 @@ public class TopicService : ITopicService
                 CreatedAt = t.Createdat,
                 AuthorName = t.CreatedbyNavigation != null ? t.CreatedbyNavigation.Name : null,
                 AuthorId = t.Createdby ?? Guid.Empty,
-                CategoryName = t.Category != null ? t.Category.Name : null
+                CategoryName = t.Category != null ? t.Category.Name : null,
+                Tags = t.Tags.Select(tag => tag.Name).ToList()
             })
             .ToListAsync();
     }
@@ -86,7 +107,8 @@ public class TopicService : ITopicService
                 CreatedAt = t.Createdat,
                 AuthorName = t.CreatedbyNavigation != null ? t.CreatedbyNavigation.Name : null,
                 AuthorId = t.Createdby ?? Guid.Empty,
-                CategoryName = t.Category != null ? t.Category.Name : null
+                CategoryName = t.Category != null ? t.Category.Name : null,
+                Tags = t.Tags.Select(tag => tag.Name).ToList()
             })
             .FirstOrDefaultAsync();
     }
@@ -105,6 +127,18 @@ public class TopicService : ITopicService
         _context.Topics.Add(topic);
         await _context.SaveChangesAsync();
 
+        // Handle Tags
+        if (createTopicDto.Tags != null && createTopicDto.Tags.Any())
+        {
+            var tagIds = await _tagService.GetOrCreateTagsAsync(createTopicDto.Tags);
+            foreach (var tagId in tagIds)
+            {
+                var tag = await _context.Tags.FindAsync(tagId);
+                if (tag != null) topic.Tags.Add(tag);
+            }
+            await _context.SaveChangesAsync();
+        }
+
         return new TopicDto
         {
             Id = topic.Id,
@@ -113,7 +147,8 @@ public class TopicService : ITopicService
             LikesCount = 0,
             CommentsCount = 0,
             CreatedAt = DateTime.UtcNow,
-            AuthorId = userId
+            AuthorId = userId,
+            Tags = createTopicDto.Tags ?? new List<string>()
         };
     }
 
@@ -128,6 +163,20 @@ public class TopicService : ITopicService
         topic.Categoryid = updateTopicDto.CategoryId;
         topic.Updatedat = DateTime.UtcNow;
 
+        // Sync Tags
+        _context.Entry(topic).Collection(t => t.Tags).Load();
+        topic.Tags.Clear();
+        
+        if (updateTopicDto.Tags != null && updateTopicDto.Tags.Any())
+        {
+            var tagIds = await _tagService.GetOrCreateTagsAsync(updateTopicDto.Tags);
+            foreach (var tagId in tagIds)
+            {
+                var tag = await _context.Tags.FindAsync(tagId);
+                if (tag != null) topic.Tags.Add(tag);
+            }
+        }
+
         await _context.SaveChangesAsync();
 
         return new TopicDto
@@ -138,7 +187,8 @@ public class TopicService : ITopicService
             LikesCount = topic.Likescount,
             CommentsCount = topic.Commentscount,
             CreatedAt = topic.Createdat,
-            AuthorId = userId
+            AuthorId = userId,
+            Tags = updateTopicDto.Tags ?? new List<string>()
         };
     }
 

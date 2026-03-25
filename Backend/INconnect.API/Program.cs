@@ -26,6 +26,8 @@ builder.Services.AddControllers()
     });
 
 builder.Services.AddScoped<ITopicService, TopicService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {

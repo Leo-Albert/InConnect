@@ -17,6 +17,21 @@ public class ProfileController : ControllerBase
         _environment = environment;
     }
 
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetProfile(Guid id)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null) return NotFound();
+
+        return Ok(new
+        {
+            id = user.Id,
+            name = user.Name,
+            email = user.Email,
+            profileImage = user.Profileimage
+        });
+    }
+
     [HttpPost("upload-image")]
     public async Task<IActionResult> UploadImage(IFormFile file)
     {

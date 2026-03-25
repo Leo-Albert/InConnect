@@ -57,16 +57,36 @@ export const api = {
     logout: () => apiInstance.post('/auth/logout') as Promise<any>,
   },
   profile: {
+    getById: (id: string) => apiInstance.get(`/profile/${id}`) as Promise<any>,
     uploadImage: (formData: FormData) => apiInstance.post('/profile/upload-image', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     }) as Promise<any>,
   },
+  categories: {
+    getAll: () => apiInstance.get('/categories') as Promise<any>,
+    create: (name: string) => apiInstance.post('/categories', JSON.stringify(name), { headers: { 'Content-Type': 'application/json' } }) as Promise<any>,
+    update: (id: number, name: string) => apiInstance.put(`/categories/${id}`, JSON.stringify(name), { headers: { 'Content-Type': 'application/json' } }) as Promise<any>,
+    delete: (id: number) => apiInstance.delete(`/categories/${id}`) as Promise<any>
+  },
+  tags: {
+    getAll: () => apiInstance.get('/tags') as Promise<any>,
+    update: (id: number, name: string) => apiInstance.put(`/tags/${id}`, JSON.stringify(name), { headers: { 'Content-Type': 'application/json' } }) as Promise<any>,
+    delete: (id: number) => apiInstance.delete(`/tags/${id}`) as Promise<any>
+  },
   topics: {
-    getFeed: (category?: string, page = 1, pageSize = 10) => apiInstance.get(`/topics?${category ? `category=${encodeURIComponent(category)}&` : ''}page=${page}&pageSize=${pageSize}`) as Promise<any>,
+    getFeed: (category?: string, tags?: string[], userId?: string, page = 1, pageSize = 10) => {
+      const params = new URLSearchParams();
+      if (category) params.append('category', category);
+      if (tags) tags.forEach(t => params.append('tags', t));
+      if (userId) params.append('userId', userId);
+      params.append('page', page.toString());
+      params.append('pageSize', pageSize.toString());
+      return apiInstance.get(`/topics?${params.toString()}`) as Promise<any>;
+    },
     getById: (id: string) => apiInstance.get(`/topics/${id}`) as Promise<any>,
     search: (query: string, page = 1, pageSize = 10) => apiInstance.get(`/topics/search?query=${encodeURIComponent(query)}&page=${page}&pageSize=${pageSize}`) as Promise<any>,
-    create: (payload: { title: string; content: string; categoryId: number }) => apiInstance.post('/topics', payload) as Promise<any>,
-    update: (id: string, payload: { title: string; content: string; categoryId: number }) => apiInstance.put(`/topics/${id}`, payload) as Promise<any>,
+    create: (payload: { title: string; content: string; categoryId: number; tags?: string[] }) => apiInstance.post('/topics', payload) as Promise<any>,
+    update: (id: string, payload: { title: string; content: string; categoryId: number; tags?: string[] }) => apiInstance.put(`/topics/${id}`, payload) as Promise<any>,
     delete: (id: string) => apiInstance.delete(`/topics/${id}`) as Promise<any>
   }
 };

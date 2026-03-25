@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 namespace INconnect.Application.DTOs;
 
 public class TopicDto
@@ -12,4 +13,5 @@ public class TopicDto
     public string? AuthorName { get; set; }
     public Guid AuthorId { get; set; }
     public string? CategoryName { get; set; }
+    public List<string> Tags { get; set; } = new();
 }

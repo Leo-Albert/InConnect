@@ -7,7 +7,7 @@ namespace INconnect.Application.Interfaces;
 
 public interface ITopicService
 {
-    Task<IEnumerable<TopicDto>> GetFeedAsync(int page, int pageSize, string? category = null);
+    Task<IEnumerable<TopicDto>> GetFeedAsync(int page, int pageSize, string? category = null, List<string>? tags = null);
     Task<IEnumerable<TopicDto>> SearchAsync(string query, int page, int pageSize);
     Task<TopicDto?> GetByIdAsync(Guid id);
     Task<TopicDto> CreateTopicAsync(CreateTopicDto createTopicDto, Guid userId);

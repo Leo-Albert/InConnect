@@ -2,19 +2,15 @@ import { useState, FormEvent, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Save, Loader2, ArrowLeft } from 'lucide-react';
 import Swal from 'sweetalert2';
-import Select from 'react-select';
+import CreatableSelect from 'react-select/creatable';
 import { CKEditor } from '@ckeditor/ckeditor5-react';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import { api } from '../../services/api';
 
-const categoryOptions = [
-  { value: '1', label: 'Backend' },
-  { value: '2', label: 'Frontend' },
-  { value: '3', label: 'Database' },
-  { value: '4', label: 'System Design' },
-  { value: '5', label: 'DevOps' },
-  { value: '6', label: 'HR Behavioral' }
-];
+interface CategoryOption {
+  value: string;
+  label: string;
+}
 
 const selectStyles = {
   control: (base: any, state: any) => ({
@@ -52,11 +48,33 @@ export default function EditTopic() {
   const navigate = useNavigate();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [categoryId, setCategoryId] = useState('1'); 
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [availableTags, setAvailableTags] = useState<CategoryOption[]>([]);
+  const [selectedTags, setSelectedTags] = useState<CategoryOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [fetchingData, setFetchingData] = useState(true);
 
   const EditorClass: any = ClassicEditor;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [catData, tagData] = await Promise.all([
+          api.categories.getAll(),
+          api.tags.getAll()
+        ]);
+        setCategories(catData.map((c: any) => ({ value: c.id.toString(), label: c.name })));
+        setAvailableTags(tagData.map((t: any) => ({ value: t.name, label: t.name })));
+      } catch (err) {
+        console.error('Failed to fetch categories/tags:', err);
+      } finally {
+        setFetchingData(false);
+      }
+    };
+    fetchData();
+  }, []);
 
   useEffect(() => {
     const fetchTopic = async () => {
@@ -67,9 +85,10 @@ export default function EditTopic() {
         if (found) {
           setTitle(found.title);
           setContent(found.content);
-          // Find category value by name or matching ID logic
-          const cat = categoryOptions.find(o => o.label === found.categoryName);
-          if (cat) setCategoryId(cat.value);
+          if (found.categoryId) setCategoryId(found.categoryId.toString());
+          if (found.tags) {
+            setSelectedTags(found.tags.map((t: string) => ({ value: t, label: t })));
+          }
         } else {
            throw new Error("Topic not found");
         }
@@ -90,13 +109,48 @@ export default function EditTopic() {
     fetchTopic();
   }, [id, navigate]);
 
+  const handleCreateCategory = async (inputValue: string) => {
+    setSaving(true);
+    try {
+      const newCategory = await api.categories.create(inputValue);
+      const newOption = { value: newCategory.id.toString(), label: newCategory.name };
+      setCategories(prev => [...prev, newOption]);
+      setCategoryId(newOption.value);
+      Swal.fire({
+        title: 'New Category Added!',
+        text: `Category "${inputValue}" created and selected.`,
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false,
+        background: 'var(--bg-surface)',
+        color: 'var(--text-primary)'
+      });
+    } catch (err: any) {
+      Swal.fire({
+        title: 'Error!',
+        text: err.message || 'Failed to create category.',
+        icon: 'error',
+        background: 'var(--bg-surface)',
+        color: 'var(--text-primary)'
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!id || !title || !content) return;
+    if (!id || !title || !content || !categoryId) return;
     
     setSaving(true);
     try {
-      await api.topics.update(id, { title, content, categoryId: parseInt(categoryId) });
+      const tagNames = selectedTags.map(t => t.value);
+      await api.topics.update(id, { 
+        title, 
+        content, 
+        categoryId: parseInt(categoryId),
+        tags: tagNames
+      });
       Swal.fire({
         title: 'Success!',
         text: 'Your post has been updated.',
@@ -160,11 +214,30 @@ export default function EditTopic() {
         
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <label style={{ fontWeight: '500', color: 'var(--text-secondary)' }}>Category</label>
-          <Select 
-            options={categoryOptions}
+          <CreatableSelect 
+            isClearable
+            isDisabled={saving || fetchingData}
+            isLoading={fetchingData}
+            onCreateOption={handleCreateCategory}
+            options={categories}
             styles={selectStyles}
-            value={categoryOptions.find(o => o.value === categoryId)}
-            onChange={(option: any) => setCategoryId(option?.value || '1')}
+            value={categories.find(o => o.value === categoryId)}
+            onChange={(option: any) => setCategoryId(option?.value || null)}
+            placeholder={fetchingData ? "Loading..." : "Select or create category..."}
+          />
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <label style={{ fontWeight: '500', color: 'var(--text-secondary)' }}>Tags</label>
+          <CreatableSelect
+            isMulti
+            isClearable
+            isDisabled={saving || fetchingData}
+            options={availableTags}
+            styles={selectStyles}
+            value={selectedTags}
+            onChange={(options) => setSelectedTags(options as CategoryOption[])}
+            placeholder="Search tags or create new ones..."
           />
         </div>
 
