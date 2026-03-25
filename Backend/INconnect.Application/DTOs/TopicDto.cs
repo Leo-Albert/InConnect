@@ -12,6 +12,7 @@ public class TopicDto
     public DateTime? CreatedAt { get; set; }
     public string? AuthorName { get; set; }
     public Guid AuthorId { get; set; }
+    public int? CategoryId { get; set; }
     public string? CategoryName { get; set; }
     public List<string> Tags { get; set; } = new();
 }

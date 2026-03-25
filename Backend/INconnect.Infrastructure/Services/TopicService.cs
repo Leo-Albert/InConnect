@@ -20,10 +20,15 @@ public class TopicService : ITopicService
         _tagService = tagService;
     }
 
-    public async Task<IEnumerable<TopicDto>> GetFeedAsync(int page, int pageSize, string? category = null, List<string>? tags = null)
+    public async Task<IEnumerable<TopicDto>> GetFeedAsync(int page, int pageSize, string? category = null, List<string>? tags = null, Guid? userId = null)
     {
         var skip = (page - 1) * pageSize;
         var query = _context.Topics.AsQueryable();
+
+        if (userId.HasValue)
+        {
+            query = query.Where(t => t.Createdby == userId.Value);
+        }
 
         if (!string.IsNullOrEmpty(category))
         {
@@ -53,6 +58,7 @@ public class TopicService : ITopicService
                 CreatedAt = t.Createdat,
                 AuthorName = t.CreatedbyNavigation != null ? t.CreatedbyNavigation.Name : null,
                 AuthorId = t.Createdby ?? Guid.Empty,
+                CategoryId = t.Categoryid,
                 CategoryName = t.Category != null ? t.Category.Name : null,
                 Tags = t.Tags.Select(tag => tag.Name).ToList()
             })
@@ -87,6 +93,7 @@ public class TopicService : ITopicService
                 CreatedAt = t.Createdat,
                 AuthorName = t.CreatedbyNavigation != null ? t.CreatedbyNavigation.Name : null,
                 AuthorId = t.Createdby ?? Guid.Empty,
+                CategoryId = t.Categoryid,
                 CategoryName = t.Category != null ? t.Category.Name : null,
                 Tags = t.Tags.Select(tag => tag.Name).ToList()
             })
@@ -107,6 +114,7 @@ public class TopicService : ITopicService
                 CreatedAt = t.Createdat,
                 AuthorName = t.CreatedbyNavigation != null ? t.CreatedbyNavigation.Name : null,
                 AuthorId = t.Createdby ?? Guid.Empty,
+                CategoryId = t.Categoryid,
                 CategoryName = t.Category != null ? t.Category.Name : null,
                 Tags = t.Tags.Select(tag => tag.Name).ToList()
             })
@@ -148,6 +156,7 @@ public class TopicService : ITopicService
             CommentsCount = 0,
             CreatedAt = DateTime.UtcNow,
             AuthorId = userId,
+            CategoryId = topic.Categoryid,
             Tags = createTopicDto.Tags ?? new List<string>()
         };
     }
@@ -188,6 +197,7 @@ public class TopicService : ITopicService
             CommentsCount = topic.Commentscount,
             CreatedAt = topic.Createdat,
             AuthorId = userId,
+            CategoryId = topic.Categoryid,
             Tags = updateTopicDto.Tags ?? new List<string>()
         };
     }

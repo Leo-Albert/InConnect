@@ -149,7 +149,7 @@ export default function Feed() {
                 style={{ cursor: 'pointer' }}
                 title={`View ${topic.authorName}'s profile`}
               >
-                {topic.authorName ? topic.authorName.charAt(0).toUpperCase() : 'U'}
+                {topic.authorName ? topic.authorName.split(' ').map(n => n[0]).join('').toUpperCase() : 'U'}
               </div>
               <div className={styles.authorMeta}>
                 <h4 

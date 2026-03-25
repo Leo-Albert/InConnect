@@ -81,7 +81,7 @@ export default function TopicDetail() {
                 onClick={() => navigate(`/profile/${topic.authorId}`)}
                 style={{ cursor: 'pointer' }}
               >
-                {topic.authorName ? topic.authorName.charAt(0).toUpperCase() : <UserIcon size={20} />}
+                {topic.authorName ? topic.authorName.split(' ').map(n => n[0]).join('').toUpperCase() : <UserIcon size={20} />}
               </div>
               <div className={styles.authorText}>
                 <span

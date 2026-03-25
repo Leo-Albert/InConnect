@@ -7,6 +7,8 @@ import AuthPage from './pages/Auth/AuthPage';
 import Profile from './pages/Profile/Profile';
 import EditTopic from './pages/EditTopic/EditTopic';
 import TopicDetail from './pages/TopicDetail/TopicDetail';
+import ForgotPassword from './pages/Auth/ForgotPassword';
+import ResetPassword from './pages/Auth/ResetPassword';
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -39,6 +41,8 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
         <Route path="/auth" element={<RedirectIfAuth><AuthPage /></RedirectIfAuth>} />
+        <Route path="/forgot-password" element={<RedirectIfAuth><ForgotPassword /></RedirectIfAuth>} />
+        <Route path="/reset-password" element={<RedirectIfAuth><ResetPassword /></RedirectIfAuth>} />
       </Routes>
     </BrowserRouter>
   );

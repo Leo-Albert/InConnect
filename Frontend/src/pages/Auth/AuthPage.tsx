@@ -67,6 +67,18 @@ export default function AuthPage() {
             <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
           </div>
           
+          {isLogin && (
+            <div className={styles.forgotPasswordContainer}>
+              <button 
+                type="button" 
+                className={styles.forgotPasswordBtn}
+                onClick={() => navigate('/forgot-password')}
+              >
+                Forgot Password?
+              </button>
+            </div>
+          )}
+          
           <button type="submit" className={styles.submitBtn} disabled={loading}>
             {loading ? <Loader2 className={styles.animateSpin} /> : isLogin ? <LogIn size={18} /> : <UserPlus size={18} />}
             {isLogin ? 'Sign In' : 'Sign Up'}

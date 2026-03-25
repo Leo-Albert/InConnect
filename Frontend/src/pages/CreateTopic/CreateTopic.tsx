@@ -122,6 +122,7 @@ export default function CreateTopic() {
         categoryId: parseInt(categoryId),
         tags: tagNames 
       });
+      window.dispatchEvent(new Event('topicUpdated'));
       navigate('/');
     } catch (err) {
       Swal.fire({

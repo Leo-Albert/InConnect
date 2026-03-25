@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace INconnect.Infrastructure.Data;
@@ -18,7 +18,8 @@ public partial class User
     public DateTime? Createdat { get; set; }
 
     public string? Passwordhash { get; set; }
-
+    public string? Resetpasswordtoken { get; set; }
+    public DateTime? Resettokenexpiry { get; set; }
     public string? Profileimage { get; set; }
 
     public virtual ICollection<Bookmark> Bookmarks { get; set; } = new List<Bookmark>();

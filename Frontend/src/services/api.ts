@@ -51,16 +51,21 @@ export const setAuthToken = (token: string | null) => {
 
 export const api = {
   auth: {
-    me: () => apiInstance.get('/auth/me') as Promise<any>,
-    login: (payload: any) => apiInstance.post('/auth/login', payload) as Promise<any>,
-    register: (payload: any) => apiInstance.post('/auth/register', payload) as Promise<any>,
+    register: (data: any) => apiInstance.post('/auth/register', data) as Promise<any>,
+    login: (data: any) => apiInstance.post('/auth/login', data) as Promise<any>,
     logout: () => apiInstance.post('/auth/logout') as Promise<any>,
+    me: () => apiInstance.get('/auth/me') as Promise<any>,
+    forgotPassword: (email: string) => apiInstance.post('/auth/forgot-password', { email }) as Promise<any>,
+    resetPassword: (data: any) => apiInstance.post('/auth/reset-password', data) as Promise<any>
   },
   profile: {
     getById: (id: string) => apiInstance.get(`/profile/${id}`) as Promise<any>,
+    search: (query: string) => apiInstance.get(`/profile/search?q=${encodeURIComponent(query)}`) as Promise<any>,
     uploadImage: (formData: FormData) => apiInstance.post('/profile/upload-image', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     }) as Promise<any>,
+    changePassword: (data: any) => apiInstance.post('/profile/change-password', data) as Promise<any>,
+    updateEmail: (newEmail: string) => apiInstance.post('/profile/update-email', { newEmail }) as Promise<any>
   },
   categories: {
     getAll: () => apiInstance.get('/categories') as Promise<any>,

@@ -151,6 +151,7 @@ export default function EditTopic() {
         categoryId: parseInt(categoryId),
         tags: tagNames
       });
+      window.dispatchEvent(new Event('topicUpdated'));
       Swal.fire({
         title: 'Success!',
         text: 'Your post has been updated.',

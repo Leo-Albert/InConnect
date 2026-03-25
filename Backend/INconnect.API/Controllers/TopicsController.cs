@@ -19,9 +19,9 @@ namespace INconnect.API.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TopicDto>>> GetTopics([FromQuery] string? category, [FromQuery] string[]? tags, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<ActionResult<IEnumerable<TopicDto>>> GetTopics([FromQuery] string? category, [FromQuery] string[]? tags, [FromQuery] Guid? userId, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            var topics = await _topicService.GetFeedAsync(page, pageSize, category, tags?.ToList());
+            var topics = await _topicService.GetFeedAsync(page, pageSize, category, tags?.ToList(), userId);
             return Ok(topics);
         }
 

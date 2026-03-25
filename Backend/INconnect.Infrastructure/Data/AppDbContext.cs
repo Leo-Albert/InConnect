@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 
@@ -235,6 +235,11 @@ public partial class AppDbContext : DbContext
             entity.Property(e => e.Passwordhash)
                 .HasMaxLength(255)
                 .HasColumnName("passwordhash");
+            entity.Property(e => e.Resetpasswordtoken)
+                .HasMaxLength(255)
+                .HasColumnName("resetpasswordtoken");
+            entity.Property(e => e.Resettokenexpiry)
+                .HasColumnName("resettokenexpiry");
             entity.Property(e => e.Profileimage)
                 .HasMaxLength(255)
                 .HasColumnName("profileimage");

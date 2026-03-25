@@ -104,6 +104,43 @@ public class AuthController : ControllerBase
         return Ok(new { message = "Logged out" });
     }
 
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == dto.Email);
+        if (user == null) return Ok(new { message = "If an account with that email exists, a reset link has been sent." });
+
+        user.Resetpasswordtoken = Guid.NewGuid().ToString();
+        user.Resettokenexpiry = DateTime.UtcNow.AddHours(1);
+        await _context.SaveChangesAsync();
+
+        // SIMULATED EMAIL SENDING
+        var resetLink = $"{Request.Headers.Origin}/reset-password?token={user.Resetpasswordtoken}";
+        Console.WriteLine("-------------------------------------------");
+        Console.WriteLine($"[EMAIL SIMULATION] Send to: {user.Email}");
+        Console.WriteLine($"[EMAIL SIMULATION] Reset Link: {resetLink}");
+        Console.WriteLine("-------------------------------------------");
+
+        return Ok(new { message = "If an account with that email exists, a reset link has been sent." });
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordDto dto)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Resetpasswordtoken == dto.Token);
+        if (user == null || user.Resettokenexpiry < DateTime.UtcNow)
+        {
+            return BadRequest(new { message = "Invalid or expired reset token." });
+        }
+
+        user.Passwordhash = BCrypt.Net.BCrypt.HashPassword(dto.NewPassword);
+        user.Resetpasswordtoken = null;
+        user.Resettokenexpiry = null;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Password has been reset successfully." });
+    }
+
     private string GenerateJwtToken(User user)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"] ?? "YourSuperSecretKeyThatIsAtLeast32BytesLong!"));
@@ -129,12 +166,14 @@ public class AuthController : ControllerBase
 
     private void SetAuthCookie(string token)
     {
+        var isDev = string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"), "Development", StringComparison.OrdinalIgnoreCase);
+        
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
             Expires = DateTime.UtcNow.AddDays(30),
-            SameSite = SameSiteMode.None, // Required for cross-site (different port/protocol)
-            Secure = true, // Required for SameSite=None
+            SameSite = isDev ? SameSiteMode.Lax : SameSiteMode.None,
+            Secure = !isDev, // Disable Secure on localhost HTTP
             Path = "/",
             IsEssential = true
         };
@@ -153,4 +192,15 @@ public class LoginDto
 {
     public string Email { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
+}
+
+public class ForgotPasswordDto
+{
+    public string Email { get; set; } = string.Empty;
+}
+
+public class ResetPasswordDto
+{
+    public string Token { get; set; } = string.Empty;
+    public string NewPassword { get; set; } = string.Empty;
 }

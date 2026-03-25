@@ -1,7 +1,7 @@
 import { FormEvent, useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Home, Search, PlusSquare, User, Bell, Sun, Moon, Edit2, Trash2 } from 'lucide-react';
+import { Home, Search, PlusSquare, User, Bell, Sun, Moon, Edit2, Trash2, Loader2 } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { api } from '../../services/api';
 import Swal from 'sweetalert2';
@@ -15,6 +15,9 @@ export default function Layout() {
   const [query, setQuery] = useState(searchParams.get('q') || '');
   const [categories, setCategories] = useState<{id: number, name: string}[]>([]);
   const [trendingTags, setTrendingTags] = useState<{id: number, name: string, topicCount: number}[]>([]);
+  const [userQuery, setUserQuery] = useState('');
+  const [userResults, setUserResults] = useState<{id: string, name: string, profileimage: string | null}[]>([]);
+  const [isSearchingUsers, setIsSearchingUsers] = useState(false);
   const activeCategory = searchParams.get('category');
   const activeTags = searchParams.getAll('tags');
 
@@ -33,6 +36,11 @@ export default function Layout() {
 
   useEffect(() => {
     fetchInitialData();
+
+    // Listen for global topic updates to refresh trending tags/categories
+    const handleUpdate = () => fetchInitialData();
+    window.addEventListener('topicUpdated', handleUpdate);
+    return () => window.removeEventListener('topicUpdated', handleUpdate);
   }, [searchParams.get('category'), searchParams.get('tags')]); 
 
   const toggleTag = (tagName: string) => {
@@ -152,6 +160,27 @@ export default function Layout() {
     setQuery(searchParams.get('q') || '');
   }, [searchParams]);
 
+  // Profile Search Logic
+  useEffect(() => {
+    const searchTimer = setTimeout(async () => {
+      if (userQuery.trim().length > 1) {
+        setIsSearchingUsers(true);
+        try {
+          const results = await api.profile.search(userQuery);
+          setUserResults(results);
+        } catch (err) {
+          console.error('User search failed:', err);
+        } finally {
+          setIsSearchingUsers(false);
+        }
+      } else {
+        setUserResults([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(searchTimer);
+  }, [userQuery]);
+
   const swalConfig = {
     background: 'var(--bg-surface)',
     color: 'var(--text-primary)',
@@ -197,11 +226,8 @@ export default function Layout() {
             {user ? (
               <Link to="/profile" className={styles.avatarLink}>
                 <div className={styles.avatar}>
-                  {user.profileimage ? (
-                    <img src={`${import.meta.env.VITE_API_URL.replace('/api', '')}/profile-images/${user.profileimage}`} alt="Profile" className={styles.avatarImg} />
-                  ) : (
-                    <span className={styles.avatarInitial}>{user.name.charAt(0).toUpperCase()}</span>
-                  )}
+                  {/* Image disabled temporarily */}
+                  <span className={styles.avatarInitial}>{user.name.split(' ').map(n => n[0]).join('').toUpperCase()}</span>
                 </div>
               </Link>
             ) : (
@@ -220,6 +246,44 @@ export default function Layout() {
         <div className={styles.contentWrapper}>
           <aside className={styles.sidebar}>
             <nav className={styles.sideNav}>
+              <div className={styles.membersSection}>
+                <h3 className={styles.sideNavTitle}>Members</h3>
+                <div className={styles.userSearchWrapper}>
+                  <div className={styles.userSearchInput}>
+                    <Search size={14} className={styles.userSearchIcon} />
+                    <input 
+                      type="text" 
+                      placeholder="Find contributors..." 
+                      value={userQuery}
+                      onChange={(e) => setUserQuery(e.target.value)}
+                    />
+                    {isSearchingUsers && <Loader2 size={12} className={styles.searchSpinner} />}
+                  </div>
+                  
+                  {userResults.length > 0 && (
+                    <div className={`glass-panel ${styles.userDropdown}`}>
+                      {userResults.map(u => (
+                        <div 
+                          key={u.id} 
+                          className={styles.userResult}
+                          onClick={() => {
+                            navigate(`/profile/${u.id}`);
+                            setUserQuery('');
+                            setUserResults([]);
+                          }}
+                        >
+                          <div className={styles.miniAvatar}>
+                            {/* Image disabled temporarily */}
+                            {u.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                          </div>
+                          <span className={styles.userNameResult}>{u.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <h3 className={styles.sideNavTitle}>Discover</h3>
               <ul className={styles.categoryList}>
                 <li className={!activeCategory ? styles.activeCategory : ''} onClick={() => navigate('/')}>All Topics</li>

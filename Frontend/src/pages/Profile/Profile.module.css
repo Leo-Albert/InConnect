@@ -142,7 +142,51 @@
   margin-bottom: 12px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+}
+
+.emailEditBtn, .emailSaveBtn, .emailCancelBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.emailEditBtn {
+  color: var(--text-muted);
+}
+
+.emailEditBtn:hover {
+  color: var(--accent-primary);
+  background: rgba(99, 102, 241, 0.1);
+}
+
+.emailSaveBtn {
+  color: var(--accent-success);
+}
+
+.emailCancelBtn {
+  color: var(--accent-danger);
+}
+
+.emailInput {
+  background: var(--bg-body);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+  padding: 4px 12px;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  outline: none;
+  width: 250px;
+}
+
+.emailInput:focus {
+  border-color: var(--accent-primary);
 }
 
 .loadingContainer {
@@ -173,6 +217,84 @@
   text-transform: uppercase;
   letter-spacing: 1px;
   color: var(--text-muted);
+}
+
+.accountActions {
+  display: flex;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.changePasswordBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.changePasswordBtn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent-primary);
+}
+
+/* Modal Styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease;
+}
+
+.modalContent {
+  width: 100%;
+  max-width: 450px;
+  padding: 32px;
+  position: relative;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.modalTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.modalSubtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+.closeModal {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.closeModal:hover {
+  color: var(--text-primary);
 }
 
 .sectionTitle {
