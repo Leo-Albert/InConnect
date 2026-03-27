@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using INconnect.Infrastructure.Data;
+using DocumentFormat.OpenXml;
+using DocumentFormat.OpenXml.Packaging;
+using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace INconnect.API.Controllers;
 
@@ -56,43 +59,50 @@ public class ProfileController : ControllerBase
 
         using (var stream = new MemoryStream())
         {
-            using (var wordDocument = DocumentFormat.OpenXml.Packaging.WordprocessingDocument.Create(stream, DocumentFormat.OpenXml.WordprocessingDocumentType.Document))
+            using (var wordDocument = WordprocessingDocument.Create(stream, WordprocessingDocumentType.Document))
             {
                 var mainPart = wordDocument.AddMainDocumentPart();
-                mainPart.Document = new DocumentFormat.OpenXml.Wordprocessing.Document();
-                var body = mainPart.Document.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Body());
+                mainPart.Document = new Document();
+                var body = mainPart.Document.AppendChild(new Body());
 
                 // Add Title Header
-                var titlePara = body.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph());
-                var titleRun = titlePara.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Run());
-                var titleProps = new DocumentFormat.OpenXml.Wordprocessing.RunProperties();
-                titleProps.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Bold());
-                titleProps.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.FontSize { Val = "36" }); // 18pt
+                var titlePara = body.AppendChild(new Paragraph());
+                var titleRun = titlePara.AppendChild(new Run());
+                var titleProps = new RunProperties();
+                titleProps.AppendChild(new Bold());
+                titleProps.AppendChild(new FontSize { Val = "40" }); // ~20pt
                 titleRun.AppendChild(titleProps);
-                titleRun.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Text($"{user.Name}'s Contributions"));
+                titleRun.AppendChild(new Text($"{user.Name}'s Contributions"));
                 
-                body.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph()); // Spacer
+                body.AppendChild(new Paragraph()); // Spacer
 
+                int chunkId = 1;
                 foreach (var topic in topics)
                 {
                     // Topic Title (Bold)
-                    var pTopicTitle = body.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph());
-                    var rTopicTitle = pTopicTitle.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Run());
-                    var rpTopicTitle = new DocumentFormat.OpenXml.Wordprocessing.RunProperties();
-                    rpTopicTitle.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Bold());
-                    rpTopicTitle.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.FontSize { Val = "28" }); // 14pt
+                    var pTopicTitle = body.AppendChild(new Paragraph());
+                    var rTopicTitle = pTopicTitle.AppendChild(new Run());
+                    var rpTopicTitle = new RunProperties();
+                    rpTopicTitle.AppendChild(new Bold());
+                    rpTopicTitle.AppendChild(new FontSize { Val = "28" }); // ~14pt
                     rTopicTitle.AppendChild(rpTopicTitle);
-                    rTopicTitle.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Text(topic.Title));
+                    rTopicTitle.AppendChild(new Text(topic.Title));
 
-                    // Strip HTML tags for clean Word content
-                    var plainContent = System.Text.RegularExpressions.Regex.Replace(topic.Content ?? "", "<.*?>", string.Empty);
-                    var decodedContent = System.Net.WebUtility.HtmlDecode(plainContent);
-
-                    var pContent = body.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph());
-                    var rContent = pContent.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Run());
-                    rContent.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Text(decodedContent));
+                    // Use altChunk to embed HTML content and preserve rich-text formatting
+                    string altChunkId = $"altChunkId{chunkId++}";
+                    var afip = mainPart.AddAlternativeFormatImportPart(AlternativeFormatImportPartType.Html, altChunkId);
                     
-                    body.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph()); // Spacer
+                    // Wrapping in basic HTML/Body ensures the parser handles it correctly
+                    string htmlContent = $"<html><body>{topic.Content ?? ""}</body></html>";
+                    using (var ms = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(htmlContent)))
+                    {
+                        afip.FeedData(ms);
+                    }
+
+                    var altChunk = new AltChunk { Id = altChunkId };
+                    body.AppendChild(altChunk);
+                    
+                    body.AppendChild(new Paragraph()); // Spacer after the chunk
                 }
 
                 mainPart.Document.Save();
