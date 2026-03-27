@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import { Loader2, LogOut, ArrowLeft, MessageSquare, Heart, Edit2, Trash2, Mail, CheckCircle, X, Edit, Lock } from 'lucide-react';
+import { Loader2, LogOut, ArrowLeft, MessageSquare, Heart, Edit2, Trash2, Mail, CheckCircle, X, Edit, Lock, FileText } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { api } from '../../services/api';
 import { formatDistanceToNow } from 'date-fns';
@@ -178,6 +178,12 @@ export default function Profile() {
     }
   };
 
+  const handleExportDocx = () => {
+    if (!profileUser) return;
+    const exportUrl = api.profile.getExportUrl(profileUser.id);
+    window.open(exportUrl, '_blank');
+  };
+
   // Profile Scroll Observer
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -280,6 +286,11 @@ export default function Profile() {
               <span className={styles.statValue}>{profileUser.contributionCount}</span>
               <span className={styles.statLabel}>Contributions</span>
             </div>
+            
+            <button className={styles.exportBtn} onClick={handleExportDocx} title="Export contributions to Word">
+              <FileText size={14} />
+              Export DOCX
+            </button>
           </div>
 
           {isOwnProfile && (

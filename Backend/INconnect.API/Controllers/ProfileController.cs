@@ -43,6 +43,66 @@ public class ProfileController : ControllerBase
     }
 
     [AllowAnonymous]
+    [HttpGet("{id}/export")]
+    public async Task<IActionResult> ExportTopics(Guid id)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null) return NotFound();
+
+        var topics = await _context.Topics
+            .Where(t => t.Createdby == id && (t.Isdeleted == false || t.Isdeleted == null))
+            .OrderBy(t => t.Createdat)
+            .ToListAsync();
+
+        using (var stream = new MemoryStream())
+        {
+            using (var wordDocument = DocumentFormat.OpenXml.Packaging.WordprocessingDocument.Create(stream, DocumentFormat.OpenXml.WordprocessingDocumentType.Document))
+            {
+                var mainPart = wordDocument.AddMainDocumentPart();
+                mainPart.Document = new DocumentFormat.OpenXml.Wordprocessing.Document();
+                var body = mainPart.Document.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Body());
+
+                // Add Title Header
+                var titlePara = body.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph());
+                var titleRun = titlePara.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Run());
+                var titleProps = new DocumentFormat.OpenXml.Wordprocessing.RunProperties();
+                titleProps.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Bold());
+                titleProps.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.FontSize { Val = "36" }); // 18pt
+                titleRun.AppendChild(titleProps);
+                titleRun.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Text($"{user.Name}'s Contributions"));
+                
+                body.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph()); // Spacer
+
+                foreach (var topic in topics)
+                {
+                    // Topic Title (Bold)
+                    var pTopicTitle = body.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph());
+                    var rTopicTitle = pTopicTitle.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Run());
+                    var rpTopicTitle = new DocumentFormat.OpenXml.Wordprocessing.RunProperties();
+                    rpTopicTitle.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Bold());
+                    rpTopicTitle.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.FontSize { Val = "28" }); // 14pt
+                    rTopicTitle.AppendChild(rpTopicTitle);
+                    rTopicTitle.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Text(topic.Title));
+
+                    // Strip HTML tags for clean Word content
+                    var plainContent = System.Text.RegularExpressions.Regex.Replace(topic.Content ?? "", "<.*?>", string.Empty);
+                    var decodedContent = System.Net.WebUtility.HtmlDecode(plainContent);
+
+                    var pContent = body.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph());
+                    var rContent = pContent.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Run());
+                    rContent.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Text(decodedContent));
+                    
+                    body.AppendChild(new DocumentFormat.OpenXml.Wordprocessing.Paragraph()); // Spacer
+                }
+
+                mainPart.Document.Save();
+            }
+
+            return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", $"{user.Name.Replace(" ", "_")}_Contributions.docx");
+        }
+    }
+
+    [AllowAnonymous]
     [HttpGet("search")]
     public async Task<IActionResult> SearchProfiles([FromQuery] string q)
     {

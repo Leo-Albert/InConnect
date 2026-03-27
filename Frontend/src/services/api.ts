@@ -65,7 +65,8 @@ export const api = {
       headers: { 'Content-Type': 'multipart/form-data' }
     }) as Promise<any>,
     changePassword: (data: any) => apiInstance.post('/profile/change-password', data) as Promise<any>,
-    updateEmail: (newEmail: string) => apiInstance.post('/profile/update-email', { newEmail }) as Promise<any>
+    updateEmail: (newEmail: string) => apiInstance.post('/profile/update-email', { newEmail }) as Promise<any>,
+    getExportUrl: (id: string) => `${apiInstance.defaults.baseURL}/profile/${id}/export`
   },
   categories: {
     getAll: () => apiInstance.get('/categories') as Promise<any>,
