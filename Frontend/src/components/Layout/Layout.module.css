@@ -22,10 +22,16 @@
   max-width: 1600px;
   margin: 0 auto;
   padding: 0 40px;
-  display: grid;
-  grid-template-columns: 240px 1fr 340px;
+  display: flex;
   align-items: center;
   gap: 48px;
+}
+
+.headerPrimary {
+  display: flex;
+  align-items: center;
+  gap: 48px;
+  flex: 1;
 }
 
 .logo {
@@ -557,16 +563,22 @@
 
 @media (max-width: 768px) {
   .header {
-    height: 60px;
-    padding: 0 8px;
+    height: auto;
+    padding: 10px 0;
   }
 
   .headerContent {
-    padding: 0;
-    gap: 4px;
-    grid-template-columns: auto 1fr auto; 
+    flex-direction: column;
+    padding: 0 12px;
+    gap: 12px;
     width: 100%;
     box-sizing: border-box;
+  }
+
+  .headerPrimary {
+    width: 100%;
+    justify-content: space-between;
+    gap: 0;
   }
 
   /* Only icon logo on very small screens */
@@ -577,25 +589,26 @@
   }
 
   .searchBar {
-    display: block;
-    max-width: 140px; 
+    width: 100%;
+    max-width: none;
     margin: 0;
   }
 
   .searchBar input {
-    padding: 6px 8px 6px 28px;
-    font-size: 0.75rem;
+    padding: 8px 16px 8px 36px;
+    font-size: 0.85rem;
     border-radius: var(--radius-md);
   }
 
   .searchIcon {
-    left: 8px;
-    width: 14px;
+    left: 12px;
+    width: 16px;
   }
 
   .main {
     padding: 12px 0;
     width: 100%;
+    overflow-x: hidden;
   }
 
   .contentWrapper {
@@ -611,7 +624,7 @@
   }
 
   .navIcons {
-    gap: 10px;
+    gap: 12px;
   }
 
   /* Hide labels in the navigation icons on mobile */
@@ -631,14 +644,21 @@
   }
 
   .createButton {
-    min-width: 34px;
-    width: 34px;
-    height: 34px;
+    min-width: 36px;
+    width: 36px;
+    height: 36px;
     padding: 0;
     display: flex;
     justify-content: center;
     align-items: center;
     border-radius: 50%;
     background: var(--accent-gradient);
+  }
+
+  .feedColumn {
+    min-height: auto;
+    min-width: 0; /* CRITICAL: Allows grid item to be smaller than its content, enabling scroll */
+    width: 100%;
+    overflow: hidden;
   }
 }

@@ -148,10 +148,11 @@ export default function Feed() {
     const observer = new IntersectionObserver(
       (entries) => {
         if (entries[0].isIntersecting && hasMore && !loading && !isFetchingMore) {
+          console.log('[Feed] Intersection detected, fetching more topics...');
           fetchMoreTopics();
         }
       },
-      { threshold: 1.0 }
+      { threshold: 0.1 }
     );
 
     const sentinel = document.getElementById('scroll-sentinel');

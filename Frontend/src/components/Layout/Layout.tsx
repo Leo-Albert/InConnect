@@ -192,10 +192,44 @@ export default function Layout() {
     <div className={styles.container}>
       <header className={`glass-panel ${styles.header}`}>
         <div className={styles.headerContent}>
-          <Link to="/" className={styles.logo}>
-            <div className={styles.logoIcon}>in</div>
-            <span>connect</span>
-          </Link>
+          <div className={styles.headerPrimary}>
+            <Link to="/" className={styles.logo}>
+              <div className={styles.logoIcon}>in</div>
+              <span>connect</span>
+            </Link>
+
+            <nav className={styles.navIcons}>
+              <Link to="/" className={styles.navButton} aria-label="Home">
+                <Home size={22} className={!searchParams.get('q') && !activeCategory ? styles.activeIcon : ''} />
+              </Link>
+              <button className={styles.navButton} aria-label="Toggle Theme" onClick={toggleTheme}>
+                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+              <button className={styles.navButton} aria-label="Notifications" onClick={() => Swal.fire({ title: 'Notifications Coming Soon!', icon: 'info', ...swalConfig })}>
+                <Bell size={22} />
+              </button>
+              <Link to="/create" style={{textDecoration: 'none'}}>
+                <button className={`${styles.navButton} ${styles.createButton}`}>
+                  <PlusSquare size={20} />
+                  <span>New Topic</span>
+                </button>
+              </Link>
+              {user ? (
+                <Link to="/profile" className={styles.avatarLink}>
+                  <div className={styles.avatar}>
+                    <span className={styles.avatarInitial}>{user.name.split(' ').map(n => n[0]).join('').toUpperCase()}</span>
+                  </div>
+                </Link>
+              ) : (
+                <Link to="/auth" style={{textDecoration: 'none'}}>
+                  <button className={`${styles.navButton} ${styles.loginButton}`}>
+                    <User size={18} />
+                    <span>Sign In</span>
+                  </button>
+                </Link>
+              )}
+            </nav>
+          </div>
           
           <form className={styles.searchBar} onSubmit={handleSearch}>
             <Search size={18} className={styles.searchIcon} />
@@ -206,39 +240,6 @@ export default function Layout() {
               onChange={(e) => setQuery(e.target.value)}
             />
           </form>
-
-          <nav className={styles.navIcons}>
-            <Link to="/" className={styles.navButton} aria-label="Home">
-              <Home size={22} className={!searchParams.get('q') && !activeCategory ? styles.activeIcon : ''} />
-            </Link>
-            <button className={styles.navButton} aria-label="Toggle Theme" onClick={toggleTheme}>
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-            <button className={styles.navButton} aria-label="Notifications" onClick={() => Swal.fire({ title: 'Notifications Coming Soon!', icon: 'info', ...swalConfig })}>
-              <Bell size={22} />
-            </button>
-            <Link to="/create" style={{textDecoration: 'none'}}>
-              <button className={`${styles.navButton} ${styles.createButton}`}>
-                <PlusSquare size={20} />
-                <span>New Topic</span>
-              </button>
-            </Link>
-            {user ? (
-              <Link to="/profile" className={styles.avatarLink}>
-                <div className={styles.avatar}>
-                  {/* Image disabled temporarily */}
-                  <span className={styles.avatarInitial}>{user.name.split(' ').map(n => n[0]).join('').toUpperCase()}</span>
-                </div>
-              </Link>
-            ) : (
-              <Link to="/auth" style={{textDecoration: 'none'}}>
-                <button className={`${styles.navButton} ${styles.loginButton}`}>
-                  <User size={18} />
-                  <span>Sign In</span>
-                </button>
-              </Link>
-            )}
-          </nav>
         </div>
       </header>
 

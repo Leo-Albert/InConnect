@@ -2,6 +2,9 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden; /* Force children to respect bounds, triggering internal scroll */
 }
 
 .feedHeader {
@@ -380,8 +383,8 @@
 
   .tabs {
     width: 100%;
-    overflow-x: auto;
-    padding-bottom: 4px;
+    margin-bottom: 4px;
+    display: flex;
     gap: 20px;
   }
 
@@ -416,8 +419,10 @@
   display: none;
   flex-direction: column;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   width: 100%;
+  max-width: 100vw;
+  overflow: hidden; /* Ensure page doesn't scroll horizontally */
 }
 
 @media (max-width: 768px) {
@@ -428,18 +433,22 @@
 
 .filterSection {
   width: 100%;
+  max-width: 100%;
+  overflow: hidden;
 }
 
 .scrollWrapper {
-  display: flex;
+  display: block; /* More reliable for horizontal scroll than flex on some mobile engines */
+  white-space: nowrap; /* Force children into a single row */
   overflow-x: auto;
-  gap: 8px;
-  padding: 8px 0; /* Add top/bottom padding to ensure chips aren't clipped */
+  overflow-y: hidden;
+  gap: 12px;
+  padding: 8px 0 16px; /* Extra bottom padding for touch comfort */
   width: 100%;
-  touch-action: pan-x; /* Tell browser this area handles horizontal swipes */
   -webkit-overflow-scrolling: touch; /* Momentum scrolling for iOS */
   scrollbar-width: none; /* Hide scrollbar Firefox */
   -ms-overflow-style: none; /* Hide scrollbar IE/Edge */
+  user-select: none; /* Prevent accidental text selection during swipe */
 }
 
 .scrollWrapper::-webkit-scrollbar {
@@ -447,32 +456,36 @@
 }
 
 .filterChip {
+  display: inline-block; /* Essential for white-space: nowrap to work */
   padding: 8px 16px;
   background: var(--bg-surface);
   border: 1px solid var(--border-light);
   border-radius: var(--radius-full);
   font-size: 0.85rem;
   color: var(--text-secondary);
-  white-space: nowrap;
   font-weight: 500;
-  flex-shrink: 0; /* Prevent shrinking */
+  margin-right: 10px; /* Space between inline items */
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .activeChip {
-  background: var(--accent-primary) !important;
+  background: var(--accent-gradient) !important;
   color: white !important;
-  border-color: var(--accent-primary) !important;
+  border-color: transparent !important;
+  box-shadow: var(--shadow-glow);
 }
 
 .tagChip {
+  display: inline-block; /* Essential for white-space: nowrap to work */
   padding: 6px 12px;
   background: rgba(93, 93, 255, 0.05);
   border: 1px solid rgba(129, 140, 248, 0.1);
   border-radius: var(--radius-full);
   font-size: 0.8rem;
   color: #818cf8;
-  white-space: nowrap;
-  flex-shrink: 0; /* Prevent shrinking */
+  margin-right: 8px; /* Space between inline items */
+  cursor: pointer;
 }
 
 .activeTagChip {
