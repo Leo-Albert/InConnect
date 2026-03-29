@@ -208,3 +208,36 @@
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+@media (max-width: 768px) {
+  .article {
+    padding: 24px 20px;
+  }
+
+  .meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .categoryBadge {
+    padding: 4px 12px;
+    font-size: 0.8rem;
+  }
+
+  .title {
+    font-size: 1.75rem;
+  }
+
+  .content {
+    font-size: 1rem;
+    margin-bottom: 30px;
+  }
+
+  .footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 24px;
+    padding-top: 24px;
+  }
+}

@@ -162,8 +162,76 @@ export default function Feed() {
     };
   }, [hasMore, loading, isFetchingMore, page]);
 
+  const [categories, setCategories] = useState<{id: number, name: string}[]>([]);
+  const [trendingTags, setTrendingTags] = useState<{id: number, name: string, topicCount: number}[]>([]);
+
+  useEffect(() => {
+    const fetchFilters = async () => {
+      try {
+        const [catData, tagData] = await Promise.all([
+          api.categories.getAll(),
+          api.tags.getAll()
+        ]);
+        setCategories(catData);
+        setTrendingTags(tagData);
+      } catch (err) {
+        console.error('Failed to fetch mobile filters:', err);
+      }
+    };
+    fetchFilters();
+  }, []);
+
+  const toggleTagSelection = (tagName: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    const existingTags = newParams.getAll('tags');
+    if (existingTags.includes(tagName)) {
+      const filtered = existingTags.filter(t => t !== tagName);
+      newParams.delete('tags');
+      filtered.forEach(t => newParams.append('tags', t));
+    } else {
+      newParams.append('tags', tagName);
+    }
+    navigate(`/?${newParams.toString()}`);
+  };
+
   return (
     <div className={styles.feedContainer}>
+      {/* Mobile-Only Filters */}
+      <div className={styles.mobileFilters}>
+        <div className={styles.filterSection}>
+          <div className={styles.scrollWrapper}>
+            <button 
+              className={`${styles.filterChip} ${!category ? styles.activeChip : ''}`}
+              onClick={() => navigate('/')}
+            >
+              All Topics
+            </button>
+            {categories.map(cat => (
+              <button 
+                key={cat.id} 
+                className={`${styles.filterChip} ${category === cat.name ? styles.activeChip : ''}`}
+                onClick={() => navigate(`/?category=${encodeURIComponent(cat.name)}`)}
+              >
+                {cat.name}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className={styles.filterSection}>
+          <div className={styles.scrollWrapper}>
+            {trendingTags.map(tag => (
+              <button 
+                key={tag.id} 
+                className={`${styles.tagChip} ${tags.includes(tag.name) ? styles.activeTagChip : ''}`}
+                onClick={() => toggleTagSelection(tag.name)}
+              >
+                #{tag.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {searchQuery && (
         <div className={styles.searchHeader}>
           <h3>Search results for: <span className={styles.searchQuote}>"{searchQuery}"</span></h3>

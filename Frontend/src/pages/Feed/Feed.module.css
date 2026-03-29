@@ -370,3 +370,112 @@
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+@media (max-width: 768px) {
+  .feedHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .tabs {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    gap: 20px;
+  }
+
+  .tab {
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+
+  .topicCard {
+    padding: 16px;
+  }
+
+  .authorAvatar {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+  }
+
+  .topicTitle {
+    font-size: 1.15rem;
+  }
+
+  .searchHeader {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+}
+
+/* Mobile Filters Display */
+.mobileFilters {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 8px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .mobileFilters {
+    display: flex;
+  }
+}
+
+.filterSection {
+  width: 100%;
+}
+
+.scrollWrapper {
+  display: flex;
+  overflow-x: auto;
+  gap: 8px;
+  padding: 8px 0; /* Add top/bottom padding to ensure chips aren't clipped */
+  width: 100%;
+  touch-action: pan-x; /* Tell browser this area handles horizontal swipes */
+  -webkit-overflow-scrolling: touch; /* Momentum scrolling for iOS */
+  scrollbar-width: none; /* Hide scrollbar Firefox */
+  -ms-overflow-style: none; /* Hide scrollbar IE/Edge */
+}
+
+.scrollWrapper::-webkit-scrollbar {
+  display: none; /* Hide scrollbar Chrome/Safari */
+}
+
+.filterChip {
+  padding: 8px 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  font-weight: 500;
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+.activeChip {
+  background: var(--accent-primary) !important;
+  color: white !important;
+  border-color: var(--accent-primary) !important;
+}
+
+.tagChip {
+  padding: 6px 12px;
+  background: rgba(93, 93, 255, 0.05);
+  border: 1px solid rgba(129, 140, 248, 0.1);
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  color: #818cf8;
+  white-space: nowrap;
+  flex-shrink: 0; /* Prevent shrinking */
+}
+
+.activeTagChip {
+  background: #818cf8 !important;
+  color: white !important;
+}

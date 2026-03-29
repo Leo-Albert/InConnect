@@ -512,3 +512,133 @@
   width: 100%;
   padding: 20px 0;
 }
+
+@media (max-width: 1200px) {
+  .headerContent {
+    grid-template-columns: 200px 1fr 200px;
+    gap: 24px;
+    padding: 0 24px;
+  }
+
+  .contentWrapper {
+    grid-template-columns: 240px 1fr;
+    gap: 32px;
+    padding: 0 24px;
+  }
+
+  .rightSidebar {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .headerContent {
+    grid-template-columns: auto 1fr auto;
+    gap: 16px;
+  }
+
+  .logo span {
+    display: none; /* Icon only logo */
+  }
+
+  .navButton span {
+    display: none; /* Icon only buttons */
+  }
+
+  /* Make sure the create button stays reachable */
+  .createButton {
+    min-width: 40px;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    border-radius: 50%;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    height: 60px;
+    padding: 0 8px;
+  }
+
+  .headerContent {
+    padding: 0;
+    gap: 4px;
+    grid-template-columns: auto 1fr auto; 
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Only icon logo on very small screens */
+  @media (max-width: 480px) {
+    .logo span {
+      display: none;
+    }
+  }
+
+  .searchBar {
+    display: block;
+    max-width: 140px; 
+    margin: 0;
+  }
+
+  .searchBar input {
+    padding: 6px 8px 6px 28px;
+    font-size: 0.75rem;
+    border-radius: var(--radius-md);
+  }
+
+  .searchIcon {
+    left: 8px;
+    width: 14px;
+  }
+
+  .main {
+    padding: 12px 0;
+    width: 100%;
+  }
+
+  .contentWrapper {
+    grid-template-columns: 1fr;
+    padding: 0 12px;
+    width: 100%;
+    box-sizing: border-box;
+    gap: 16px;
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .navIcons {
+    gap: 10px;
+  }
+
+  /* Hide labels in the navigation icons on mobile */
+  .navIcons .navButton span {
+    display: none;
+  }
+
+  /* Restore visibility of Theme and Home, but hide text */
+  .navIcons .navButton:nth-child(1), /* Home */
+  .navIcons .navButton:nth-child(2) { /* Theme */
+    display: flex !important;
+  }
+
+  /* Keep bell hidden to save space if needed */
+  .navIcons .navButton:nth-child(3) { 
+    display: none;
+  }
+
+  .createButton {
+    min-width: 34px;
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    background: var(--accent-gradient);
+  }
+}

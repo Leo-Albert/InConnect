@@ -493,3 +493,52 @@
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+@media (max-width: 768px) {
+  .profileHero {
+    flex-direction: column;
+    padding: 32px 20px;
+    text-align: center;
+    gap: 24px;
+  }
+
+  .userName {
+    font-size: 1.75rem;
+  }
+
+  .nameRow {
+    justify-content: center;
+  }
+
+  .userEmail {
+    justify-content: center;
+    font-size: 0.95rem;
+  }
+
+  .statsRow {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .exportBtn {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .pdfBtn {
+    margin-left: 0;
+  }
+
+  .accountActions {
+    flex-direction: column;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .changePasswordBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}

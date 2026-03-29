@@ -128,10 +128,52 @@ public class ProfileController : ControllerBase
 
         try 
         {
-            // Browser setup
-            var browserFetcher = new BrowserFetcher();
-            await browserFetcher.DownloadAsync();
-            await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = true });
+            // Browser setup - Robust Production Configuration
+            string? executablePath = null;
+            
+            // 1. Try to find a system-installed Chromium-based browser (Best for restricted servers)
+            var commonPaths = new[]
+            {
+                @"C:\Program Files\Google\Chrome\Application\chrome.exe",
+                @"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
+                @"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+                @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"
+            };
+
+            foreach (var path in commonPaths)
+            {
+                if (System.IO.File.Exists(path))
+                {
+                    executablePath = path;
+                    break;
+                }
+            }
+
+            // 2. Fallback to automated download if no system browser is found
+            if (string.IsNullOrEmpty(executablePath))
+            {
+                var browserFetcher = new BrowserFetcher(new BrowserFetcherOptions
+                {
+                    Path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".local-chromium")
+                });
+                
+                // The DownloadAsync() without parameters handles the default version for the current platform
+                var installedBrowser = await browserFetcher.DownloadAsync();
+                executablePath = installedBrowser.GetExecutablePath();
+            }
+
+            await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions 
+            { 
+                Headless = true,
+                ExecutablePath = executablePath,
+                Args = new[] 
+                { 
+                    "--no-sandbox", 
+                    "--disable-setuid-sandbox", 
+                    "--disable-dev-shm-usage",
+                    "--disable-gpu"
+                }
+            });
             await using var page = await browser.NewPageAsync();
 
             // Construct HTML with some premium styling

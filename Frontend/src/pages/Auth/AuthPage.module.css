@@ -143,3 +143,25 @@
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+@media (max-width: 480px) {
+  .authCard {
+    padding: 24px 20px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .subtitle {
+    margin-bottom: 24px;
+  }
+
+  .form {
+    gap: 16px;
+  }
+
+  .submitBtn {
+    padding: 12px;
+  }
+}
