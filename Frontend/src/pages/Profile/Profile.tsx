@@ -184,6 +184,12 @@ export default function Profile() {
     window.open(exportUrl, '_blank');
   };
 
+  const handleExportPdf = () => {
+    if (!profileUser) return;
+    const exportUrl = (api.profile as any).getExportPdfUrl(profileUser.id);
+    window.open(exportUrl, '_blank');
+  };
+
   // Profile Scroll Observer
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -290,6 +296,11 @@ export default function Profile() {
             <button className={styles.exportBtn} onClick={handleExportDocx} title="Export contributions to Word">
               <FileText size={14} />
               Export DOCX
+            </button>
+
+            <button className={`${styles.exportBtn} ${styles.pdfBtn}`} onClick={handleExportPdf} title="Export contributions to PDF">
+              <FileText size={14} />
+              Export PDF
             </button>
           </div>
 

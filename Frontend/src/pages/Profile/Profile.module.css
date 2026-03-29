@@ -243,8 +243,16 @@
   transform: translateY(-1px);
 }
 
-.exportBtn:active {
-  transform: translateY(0);
+.pdfBtn {
+  color: #ef4444; 
+  border-color: rgba(239, 68, 68, 0.2);
+  margin-left: 12px; /* Small gap between the two export buttons */
+}
+
+.pdfBtn:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+  color: #ef4444;
 }
 
 .accountActions {

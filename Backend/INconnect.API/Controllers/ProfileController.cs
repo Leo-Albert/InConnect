@@ -6,6 +6,8 @@ using INconnect.Infrastructure.Data;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
+using PuppeteerSharp;
+using PuppeteerSharp.Media;
 
 namespace INconnect.API.Controllers;
 
@@ -109,6 +111,81 @@ public class ProfileController : ControllerBase
             }
 
             return File(stream.ToArray(), "application/vnd.openxmlformats-officedocument.wordprocessingml.document", $"{user.Name.Replace(" ", "_")}_Contributions.docx");
+        }
+    }
+    
+    [AllowAnonymous]
+    [HttpGet("{id}/export-pdf")]
+    public async Task<IActionResult> ExportTopicsPdf(Guid id)
+    {
+        var user = await _context.Users.FindAsync(id);
+        if (user == null) return NotFound();
+
+        var topics = await _context.Topics
+            .Where(t => t.Createdby == id && (t.Isdeleted == false || t.Isdeleted == null))
+            .OrderBy(t => t.Createdat)
+            .ToListAsync();
+
+        try 
+        {
+            // Browser setup
+            var browserFetcher = new BrowserFetcher();
+            await browserFetcher.DownloadAsync();
+            await using var browser = await Puppeteer.LaunchAsync(new LaunchOptions { Headless = true });
+            await using var page = await browser.NewPageAsync();
+
+            // Construct HTML with some premium styling
+            var htmlBuilder = new System.Text.StringBuilder();
+            htmlBuilder.Append($@"
+                <html>
+                <head>
+                    <style>
+                        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+                        body {{ font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; line-height: 1.6; background: #fff; }}
+                        .header {{ text-align: center; border-bottom: 2px solid #6366f1; padding-bottom: 24px; margin-bottom: 40px; }}
+                        .header h1 {{ color: #1e1b4b; margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }}
+                        .header p {{ color: #64748b; margin: 8px 0 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; }}
+                        .topic {{ margin-bottom: 40px; page-break-inside: avoid; }}
+                        .topic-title {{ color: #4f46e5; font-size: 22px; font-weight: 700; margin-bottom: 12px; border-left: 5px solid #6366f1; padding-left: 20px; }}
+                        .topic-content {{ font-size: 15px; color: #334155; margin-left: 25px; }}
+                        .topic-date {{ font-size: 12px; color: #94a3b8; margin-top: 10px; margin-left: 25px; font-weight: 500; font-style: italic; }}
+                        footer {{ position: fixed; bottom: 20px; width: 100%; text-align: center; color: #94a3b8; font-size: 10px; }}
+                        @page {{ size: A4; margin: 25mm; }}
+                    </style>
+                </head>
+                <body>
+                    <div class='header'>
+                        <h1>{user.Name}'s Contributions</h1>
+                        <p>Generated via INconnect Platform</p>
+                    </div>");
+
+            foreach (var topic in topics)
+            {
+                htmlBuilder.Append($@"
+                    <div class='topic'>
+                        <div class='topic-title'>{topic.Title}</div>
+                        <div class='topic-content'>{topic.Content}</div>
+                        <div class='topic-date'>Published on {topic.Createdat:MMMM dd, yyyy}</div>
+                    </div>");
+            }
+
+            htmlBuilder.Append($@"
+                    <footer>Professional Portfolio for {user.Name} | &copy; {DateTime.Now.Year} INconnect</footer>
+                </body></html>");
+
+            await page.SetContentAsync(htmlBuilder.ToString());
+            var pdfBuffer = await page.PdfDataAsync(new PdfOptions
+            {
+                Format = PaperFormat.A4,
+                PrintBackground = true,
+                MarginOptions = new MarginOptions { Top = "25mm", Right = "25mm", Bottom = "25mm", Left = "25mm" }
+            });
+
+            return File(pdfBuffer, "application/pdf", $"{user.Name.Replace(" ", "_")}_Contributions.pdf");
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { message = "Failed to generate PDF.", details = ex.Message });
         }
     }
 

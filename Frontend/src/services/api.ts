@@ -66,7 +66,8 @@ export const api = {
     }) as Promise<any>,
     changePassword: (data: any) => apiInstance.post('/profile/change-password', data) as Promise<any>,
     updateEmail: (newEmail: string) => apiInstance.post('/profile/update-email', { newEmail }) as Promise<any>,
-    getExportUrl: (id: string) => `${apiInstance.defaults.baseURL}/profile/${id}/export`
+    getExportUrl: (id: string) => `${apiInstance.defaults.baseURL}/profile/${id}/export`,
+    getExportPdfUrl: (id: string) => `${apiInstance.defaults.baseURL}/profile/${id}/export-pdf`
   },
   categories: {
     getAll: () => apiInstance.get('/categories') as Promise<any>,
